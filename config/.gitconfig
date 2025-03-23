@@ -1,0 +1,36 @@
+[include]
+    path = ~/.gitconfig.local
+    
+[core]
+    excludesfile = ~/.gitignore_global
+    editor = vim
+    autocrlf = input
+    
+[color]
+    ui = auto
+    
+[init]
+    defaultBranch = main
+    
+[pull]
+    rebase = false
+    
+[push]
+    default = simple
+    
+[alias]
+    # Shorter commands
+    st = status
+    ci = commit
+    co = checkout
+    br = branch
+    
+    # Useful shortcuts
+    unstage = reset HEAD --
+    last = log -1 HEAD
+    
+    # Pretty log formats
+    lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
+    
+[help]
+    autocorrect = 1

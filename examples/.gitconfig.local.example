@@ -1,0 +1,15 @@
+# This is an example of a local Git configuration file
+# Copy this file to ~/.gitconfig.local and update with your information
+
+[user]
+    name = FIRST_NAME LAST_NAME
+    email = YOUR_EMAIL@example.com
+    
+[github]
+    user = YOUR_GITHUB_USERNAME
+
+[core]
+    # Add any custom core settings here
+
+[alias]
+    # Add your custom git aliases here

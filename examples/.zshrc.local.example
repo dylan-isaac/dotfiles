@@ -1,0 +1,23 @@
+# This is an example of a local Zsh configuration file
+# Copy this file to ~/.zshrc.local and update with your information
+
+# Personal Environment Variables
+export EDITOR='code'  # or 'vim', 'emacs', etc.
+export PROJECTS=$HOME/Projects  # Your projects directory
+
+# API Keys and Secrets (replace with your actual keys)
+export GITHUB_TOKEN="your_github_token_here"
+export AWS_ACCESS_KEY_ID="your_aws_key_here"
+export AWS_SECRET_ACCESS_KEY="your_aws_secret_here"
+
+# Custom Aliases
+alias g="git"
+alias dc="docker-compose"
+
+# Custom Functions
+function mkcd() {
+    mkdir -p "$1" && cd "$1"
+}
+
+# Add custom paths
+# export PATH=$PATH:/custom/path
