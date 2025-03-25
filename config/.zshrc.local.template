@@ -3,6 +3,12 @@
 # ==========================================================
 
 # -----------------------------
+# Environment Type (uncomment one)
+# -----------------------------
+# ENVIRONMENT_TYPE="personal"  # For personal machines
+# ENVIRONMENT_TYPE="work"      # For work machines
+
+# -----------------------------
 # AI Coding Assistant Configuration
 # -----------------------------
 
@@ -15,6 +21,16 @@ export OPENAI_API_KEY="your_openai_api_key_here"
 # Goose configuration 
 export GOOSE_HOME="$HOME/.goose" # Default location
 export PATH="$GOOSE_HOME/bin:$PATH"
+
+# AI tool aliases
+alias ai-code='aider --model gpt-4o'  # Quick access to preferred AI coding assistant
+alias ai-explain='goose explain -f'    # Explain code in a file
+
+# If in work environment, use specific settings
+if [[ "$ENVIRONMENT_TYPE" == "work" ]]; then
+    # Work-specific AI settings
+
+fi
 
 # -----------------------------
 # Python & UV Configuration

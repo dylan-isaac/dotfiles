@@ -13,6 +13,22 @@ cd ~/Projects/dotfiles
 ./install.sh
 ```
 
+### Installation Options
+
+```bash
+# Skip installing applications
+./install.sh --skip-apps
+
+# Quick mode - skip installations that are already complete
+./install.sh --quick
+
+# Configure for work environment (different AI settings)
+./install.sh --work
+
+# Combine options
+./install.sh --quick --skip-apps --work
+```
+
 ## 📦 What's Included
 
 - `zsh` configuration with modern CLI tools
@@ -66,45 +82,58 @@ The dotfiles include setup for these AI coding assistants:
 
 - AI tools are installed automatically by the setup script
 - API keys are stored in `~/.zshrc.local` (created from the template)
-- Common aliases and functions are in `.zshrc` (commented out by default)
+- Configuration files are set up in your home directory:
+  - `~/.aider.conf.yml` - Aider configuration
+  - `~/.env` - Aider environment variables
+  - `~/.config/goose/config.yaml` - Goose configuration
+- Work vs. personal configurations are supported via the `--work` flag
 
 #### Getting Started with AI Tools
 
-1. **Set up your API keys** in `~/.zshrc.local`:
+1. **Set up your API keys** in `~/.zshrc.local` and/or `~/.env`:
    ```bash
    # For Aider
-   export AIDER_OPENAI_API_KEY="sk-..."
-   export AIDER_ANTHROPIC_API_KEY="sk-ant-..." # Optional
+   export OPENAI_API_KEY="sk-..."
+   export ANTHROPIC_API_KEY="sk-ant-..." # Optional
    
    # For Goose
    export GOOSE_API_KEY="your_key_here"
    ```
 
-2. **Uncomment the tools you want** in `.zshrc` (AI Coding Tools section)
-
-3. **Basic usage examples**:
+2. **Use the built-in aliases**:
    ```bash
-   # Start aider with default settings
-   aider
+   # Start AI coding assistant with preferred model
+   ai-code
+   
+   # Explain code in a file
+   ai-explain path/to/file
+   ```
 
+3. **Full commands**:
+   ```bash
    # Start aider with specific model
    aider --model gpt-4o
-
-   # Use goose
-   goose
-
-   # Explain code with goose
+   
+   # Use goose for explanation
    goose explain -f path/to/file
    ```
 
-#### Troubleshooting
+#### Work vs. Personal Configuration
 
-- If you encounter API key issues, verify they're correctly set in `~/.zshrc.local`
-- If tools aren't available, try installing manually:
-  ```bash
-  python3 -m pip install aider-chat
-  curl -fsSL https://block.github.io/goose/install.sh | sh
-  ```
+The installation script supports different configurations for work and personal environments:
+
+```bash
+# Install with work settings
+./install.sh --work
+
+# Edit your .zshrc.local to set environment
+ENVIRONMENT_TYPE="work"  # or "personal"
+```
+
+This affects:
+- Which AI models are configured as defaults
+- Git commit attribution for AI tools
+- Available model aliases
 
 ## 🔐 Sensitive Configuration
 

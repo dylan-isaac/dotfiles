@@ -1,0 +1,31 @@
+# Aider Configuration - Personal Environment
+
+# Model Aliases - Quick access to preferred models
+alias:
+  - "fast:gpt-4o-mini"
+  - "smart:gpt-4o"
+  - "opus:claude-3-opus-20240229"
+  - "sonnet:claude-3-sonnet-20240229"
+  - "haiku:claude-3-5-haiku-20241022"
+  - "deepseek:deepseek/deepseek-reasoner"
+
+# Editor configuration
+editor: cursor --wait
+
+# Git settings
+git: true
+auto_commits: true
+show_diffs: true
+gitignore: true
+
+# Output settings
+pretty: true
+stream: true
+dark_mode: true
+code_theme: monokai
+
+# Prompt cache settings
+cache_prompts: true
+
+# Default behavior
+fancy_input: true 

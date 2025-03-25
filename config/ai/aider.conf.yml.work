@@ -1,0 +1,32 @@
+# Aider Configuration - Work Environment
+
+# Model Aliases - Quick access to preferred models with focus on OpenAI models
+alias:
+  - "fast:gpt-4o-mini"
+  - "smart:gpt-4o"
+  - "detailed:gpt-4"
+  - "turbo:gpt-3.5-turbo"
+
+# Editor configuration
+editor: cursor --wait
+
+# Git settings
+git: true
+auto_commits: true
+show_diffs: true
+gitignore: true
+attribute_author: true
+attribute_committer: true
+attribute_commit_message_author: true
+
+# Output settings
+pretty: true
+stream: true
+dark_mode: true
+code_theme: monokai
+
+# Prompt cache settings
+cache_prompts: true
+
+# Default behavior
+fancy_input: true 
