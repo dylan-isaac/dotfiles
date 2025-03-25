@@ -71,3 +71,10 @@ var/
 /test/version_tmp/
 /tmp/
 .rvmrc
+
+# Ignore local config files with sensitive information
+.zshrc.local
+*.env.local
+.env
+*.tokens
+.config.local

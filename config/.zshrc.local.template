@@ -1,0 +1,54 @@
+# ==========================================================
+# Local ZSH Configuration - Machine Specific Settings
+# ==========================================================
+
+# -----------------------------
+# AI Coding Assistant Configuration
+# -----------------------------
+
+# Aider configuration
+export AIDER_CHAT_MODEL="gpt-4o" # Or your preferred model
+export OPENAI_API_KEY="your_openai_api_key_here"
+# export ANTHROPIC_API_KEY="your_anthropic_api_key_here" # Optional
+# export AIDER_MODEL_ENDPOINT="https://your-custom-endpoint" # Uncomment if using a custom endpoint
+
+# Goose configuration 
+export GOOSE_HOME="$HOME/.goose" # Default location
+export PATH="$GOOSE_HOME/bin:$PATH"
+
+# -----------------------------
+# Python & UV Configuration
+# -----------------------------
+
+# UV configuration options
+export UV_CACHE_DIR="$HOME/.cache/uv"     # Cache directory
+export UV_INDEX_URL="https://pypi.org/simple/" # Default PyPI index
+# export UV_EXTRA_INDEX_URL="https://your-custom-index/simple/"  # Additional index (if needed)
+# export UV_VIRTUALENV_PYTHON="/usr/local/bin/python3.12"        # Specific Python version for venvs 
+
+# Uncomment for Python development
+# export PYTHONBREAKPOINT="ipdb.set_trace"                        # Set default debugger
+# export PYTHONDONTWRITEBYTECODE=1                              # Don't create .pyc files
+# export PYTHONWARNINGS="default"                              # Show Python warnings
+
+# -----------------------------
+# Machine-Specific Settings
+# -----------------------------
+
+# Environment variables
+export MACHINE_PROJECT_DIR="$HOME/Projects" # Custom project directory
+# export COMPANY_VPN_CONFIG="/path/to/vpn/config"
+
+# Machine-specific API keys and tokens
+# export GITHUB_TOKEN="your_github_token"
+# export GITLAB_TOKEN="your_gitlab_token"
+# export JIRA_API_TOKEN="your_jira_token"
+
+# -----------------------------
+# Machine-Specific Aliases
+# -----------------------------
+
+# Add your machine-specific aliases here
+# alias vpn-connect='command_to_connect_to_vpn'
+# alias start-db='docker start my-postgres'
+# alias work-tunnel='ssh -N -L 8080:localhost:8080 work-server' 

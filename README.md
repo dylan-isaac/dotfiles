@@ -45,7 +45,7 @@ cd ~/Projects/dotfiles
 ### Development Tools
 - Git configuration
 - Node.js setup with nvm
-- Python setup with pyenv
+- Python setup with pyenv and UV (modern Python package manager)
 - Other development tools
 
 ### macOS Configuration
@@ -54,6 +54,57 @@ cd ~/Projects/dotfiles
 - Dock configuration
 - Safari development settings
 - Security & privacy settings
+
+### 🤖 AI Coding Tools
+
+The dotfiles include setup for these AI coding assistants:
+
+1. **[Aider](https://aider.chat/)** - A terminal-based AI pair programming tool
+2. **[Goose](https://block.github.io/goose/)** - Block's AI agent for software development
+
+#### Configuration
+
+- AI tools are installed automatically by the setup script
+- API keys are stored in `~/.zshrc.local` (created from the template)
+- Common aliases and functions are in `.zshrc` (commented out by default)
+
+#### Getting Started with AI Tools
+
+1. **Set up your API keys** in `~/.zshrc.local`:
+   ```bash
+   # For Aider
+   export AIDER_OPENAI_API_KEY="sk-..."
+   export AIDER_ANTHROPIC_API_KEY="sk-ant-..." # Optional
+   
+   # For Goose
+   export GOOSE_API_KEY="your_key_here"
+   ```
+
+2. **Uncomment the tools you want** in `.zshrc` (AI Coding Tools section)
+
+3. **Basic usage examples**:
+   ```bash
+   # Start aider with default settings
+   aider
+
+   # Start aider with specific model
+   aider --model gpt-4o
+
+   # Use goose
+   goose
+
+   # Explain code with goose
+   goose explain -f path/to/file
+   ```
+
+#### Troubleshooting
+
+- If you encounter API key issues, verify they're correctly set in `~/.zshrc.local`
+- If tools aren't available, try installing manually:
+  ```bash
+  python3 -m pip install aider-chat
+  curl -fsSL https://block.github.io/goose/install.sh | sh
+  ```
 
 ## 🔐 Sensitive Configuration
 
@@ -84,3 +135,29 @@ git pull
 ## 📜 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+### 🐍 Python Environment
+
+The dotfiles configure Python with modern tools for a better development experience:
+
+1. **UV** - A faster, more reliable Python package manager and installer:
+   - Replaces `pip` commands with UV alternatives
+   - Sets up proper dependency resolution
+   - Generates lockfiles for reproducible environments
+
+2. **pyenv** - Manages Python versions
+
+#### Python Features
+
+- **Virtual environments**: Create with `create-venv [name]`
+- **Package management**: Use UV commands with aliases like `uvpip`, `uvinstall`, etc.
+
+#### Configuration
+
+UV settings can be customized in your `~/.zshrc.local` file:
+
+```bash
+# Example custom UV configuration
+export UV_VIRTUALENV_PYTHON="/usr/local/bin/python3.11"
+export UV_EXTRA_INDEX_URL="https://my-custom-index/simple/"
+```

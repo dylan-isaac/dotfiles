@@ -47,7 +47,25 @@ export PATH="$HOME/.local/bin:$PATH"
 # 5. Tool Configuration
 # -----------------------------
 
-# Oh My Zsh
+# UV - Modern Python Package Manager
+# Setting UV as the default Python package manager
+export UV_PYTHON_DEFAULT_TOOL=1
+
+# Ensure Python related paths are available
+export PATH="$HOME/.local/bin:$PATH"            # User-installed Python packages
+[ -d "$HOME/.pyenv/bin" ] && export PATH="$HOME/.pyenv/bin:$PATH"  # pyenv if installed
+
+# Ensure Rust/Cargo paths are available for UV
+[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+[ -d "$HOME/.cargo/bin" ] && export PATH="$HOME/.cargo/bin:$PATH"
+
+# UV aliases - Python package management
+alias uvpip="uv pip"
+alias uvvenv="uv venv"
+alias uvrun="uv run"
+alias uvinstall="uv pip install"
+
+# oh My Zsh
 export ZSH="$HOME/.oh-my-zsh"
 plugins=(
     git
@@ -81,6 +99,45 @@ export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null && {
     export PATH="$PYENV_ROOT/bin:$PATH"
     eval "$(pyenv init -)"
+}
+
+# UV - Modern Python Package Manager
+export UV_SYSTEM_PYTHON=false    # Don't use system Python by default
+
+# Python aliases - use UV instead of pip
+alias uvpipx="uv pipx"
+alias uvuninstall="uv pip uninstall"
+alias uvlist="uv pip list"
+alias uvfreeze="uv pip freeze"
+
+# Python environment functions
+function create-venv() {
+    local venv_path="${1:-.venv}"
+    local activate_venv="${2:-true}"
+    
+    # Check if venv already exists
+    if [ -d "$venv_path" ]; then
+        echo "Virtual environment already exists at $venv_path"
+    else
+        echo "Creating virtual environment at $venv_path..."
+        uv venv "$venv_path"
+        echo "Virtual environment created at $venv_path"
+    fi
+    
+    # Check if we should activate the venv
+    if [ "$activate_venv" = true ]; then
+        # Check if we're already in a virtual environment
+        if [ -n "$VIRTUAL_ENV" ]; then
+            echo "Already in virtual environment: $VIRTUAL_ENV"
+            echo "Deactivate first with 'deactivate' if you want to switch"
+        else
+            echo "Activating virtual environment..."
+            source "$venv_path/bin/activate"
+            echo "Virtual environment activated"
+        fi
+    else
+        echo "Activate with: source $venv_path/bin/activate"
+    fi
 }
 
 # -----------------------------
@@ -144,6 +201,10 @@ function extract() {
 # Source local configuration if it exists
 [ -f ~/.localrc ] && source ~/.localrc
 
+# Source machine-specific configuration with API keys and settings
+# This file is not tracked in git - see .zshrc.local.template for reference
+[ -f ~/.zshrc.local ] && source ~/.zshrc.local
+
 # iTerm2 Integration
 [ -f "${HOME}/.iterm2_shell_integration.zsh" ] && source "${HOME}/.iterm2_shell_integration.zsh"
 
@@ -154,6 +215,42 @@ function extract() {
 eval "$(starship init zsh)"
 
 # -----------------------------
-# 10. Custom Configuration
+# 10. AI Coding Tools
+# -----------------------------
+# AI coding tools configuration and aliases
+# For full configuration, see the AI Coding Tools section in README.md
+
+# Basic aliases for AI coding tools - uncomment and customize as needed
+# alias aider='aider --temperature 0.0'  # Lower temperature for more deterministic responses
+# alias goose='goose'                    # Block's AI development tool
+
+# Examples of helpful AI tool aliases (uncomment and modify as needed)
+# alias ai-code='aider --model gpt-4o'  # Example: Quick access to preferred AI coding assistant
+# alias explain='goose explain -f'      # Example: Explain code in a file
+
+# Example of a simple AI helper function
+# function ai-help() {
+#   echo "========== AI Coding Assistant Commands =========="
+#   echo "See the AI Coding Tools section in README.md for complete documentation"
+#   echo "Remember to configure your API keys in ~/.zshrc.local"
+# }
+
+# Example helper functions (uncomment and modify as needed)
+# 
+# # Clone a repo and start aider with it
+# function aider-repo() {
+#   local repo_url="$1"
+#   local branch="${2:-main}"
+#   local temp_dir=$(mktemp -d)
+#   
+#   echo "Cloning $repo_url ($branch) to $temp_dir..."
+#   git clone --branch "$branch" "$repo_url" "$temp_dir"
+#   
+#   echo "Starting aider with the repository..."
+#   cd "$temp_dir" && aider
+# }
+
+# -----------------------------
+# 11. Custom Configuration
 # -----------------------------
 # Add your custom configurations below this line

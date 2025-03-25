@@ -1,12 +1,32 @@
-#!/bin/bash
+#!/bin/zsh
 
 ###############################################################################
 # Error Handling & Utility Functions                                          #
 ###############################################################################
 
+# Text formatting
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Log function with timestamps
+log() {
+    local level="$1"
+    local message="$2"
+    
+    case "$level" in
+        "info") echo -e "${BLUE}[INFO]${NC} $message" ;;
+        "success") echo -e "${GREEN}[SUCCESS]${NC} $message" ;;
+        "warn") echo -e "${YELLOW}[WARNING]${NC} $message" ;;
+        "error") echo -e "${RED}[ERROR]${NC} $message" ;;
+    esac
+}
+
 # Error handling
 handle_error() {
-    echo "⚠️  Error on line $1"
+    log "error" "Error on line $1"
 }
 
 trap 'handle_error $LINENO' ERR
@@ -14,9 +34,11 @@ trap 'handle_error $LINENO' ERR
 # Function to safely run defaults command
 safe_defaults_write() {
     if ! defaults write "$@" 2>/dev/null; then
-        echo "⚠️  Failed to set preference: defaults write $*"
+        log "warn" "Failed to set preference: defaults write $*"
     fi
 }
+
+log "info" "Configuring macOS system preferences..."
 
 # Close any open System Preferences panes
 osascript -e 'tell application "System Preferences" to quit' 2>/dev/null || true
@@ -31,7 +53,7 @@ while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 # General UI/UX                                                               #
 ###############################################################################
 
-echo "Configuring General UI/UX preferences..."
+log "info" "Configuring General UI/UX preferences..."
 
 # Disable the sound effects on boot
 if [[ -w /sys/firmware/efi/efivars ]]; then
@@ -74,7 +96,7 @@ safe_defaults_write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool fal
 # Trackpad, Mouse, Keyboard, and Input                                       #
 ###############################################################################
 
-echo "Configuring input device preferences..."
+log "info" "Configuring input device preferences..."
 
 # Trackpad: enable tap to click
 safe_defaults_write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
@@ -98,7 +120,7 @@ safe_defaults_write NSGlobalDomain ApplePressAndHoldEnabled -bool false
 # Screen                                                                      #
 ###############################################################################
 
-echo "Configuring screen preferences..."
+log "info" "Configuring screen preferences..."
 
 # Require password immediately after sleep or screen saver begins
 safe_defaults_write com.apple.screensaver askForPassword -int 1
@@ -117,7 +139,7 @@ safe_defaults_write com.apple.screencapture disable-shadow -bool true
 # Finder                                                                      #
 ###############################################################################
 
-echo "Configuring Finder preferences..."
+log "info" "Configuring Finder preferences..."
 
 # Set Desktop as the default location for new Finder windows
 safe_defaults_write com.apple.finder NewWindowTarget -string "PfDe"
@@ -167,7 +189,7 @@ sudo chflags nohidden /Volumes || true
 # Dock                                                                        #
 ###############################################################################
 
-echo "Configuring Dock preferences..."
+log "info" "Configuring Dock preferences..."
 
 # Set the icon size of Dock items
 safe_defaults_write com.apple.dock tilesize -int 48
@@ -220,7 +242,7 @@ echo "- Customize email address copying format in Mail preferences"
 # Terminal & iTerm2                                                          #
 ###############################################################################
 
-echo "Configuring Terminal preferences..."
+log "info" "Configuring Terminal preferences..."
 
 # Only use UTF-8 in Terminal.app
 safe_defaults_write com.apple.terminal StringEncodings -array 4
@@ -232,7 +254,7 @@ safe_defaults_write com.googlecode.iterm2 PromptOnQuit -bool false
 # Activity Monitor                                                            #
 ###############################################################################
 
-echo "Configuring Activity Monitor preferences..."
+log "info" "Configuring Activity Monitor preferences..."
 
 # Show the main window when launching Activity Monitor
 safe_defaults_write com.apple.ActivityMonitor OpenMainWindow -bool true
@@ -288,30 +310,166 @@ safe_defaults_write com.apple.SoftwareUpdate CriticalUpdateInstall -int 1
 safe_defaults_write com.apple.commerce AutoUpdate -bool true
 
 ###############################################################################
-# Kill affected applications                                                  #
+# AI Development Tools                                                        #
 ###############################################################################
 
-echo "Restarting affected applications..."
+echo "Setting up AI development tools..."
 
-apps_to_restart=(
-    "Activity Monitor"
-    "Address Book"
-    "Calendar"
-    "cfprefsd"
-    "Contacts"
-    "Dock"
-    "Finder"
-    "Mail"
-    "Photos"
-    "Safari"
-    "SystemUIServer"
-    "Terminal"
-    "iCal"
-)
+# Install Python dependencies 
+echo "Installing Python and package management tools..."
+brew install python pyenv
 
-for app in "${apps_to_restart[@]}"; do
-    killall "${app}" &>/dev/null || true
-done
+# Install Rust and UV
+echo "Installing UV - Modern Python Package Manager..."
+brew install rustup || {
+    echo "⚠️  Failed to install rustup. Attempting to continue..."
+}
 
-echo "✅ Done! Note that some of these changes require a logout/restart to take effect."
-echo "🔄 Please log out and back in to ensure all settings are applied correctly."
+if command -v rustup &> /dev/null; then
+    echo "Initializing Rust..."
+    rustup-init -y --no-modify-path || {
+        echo "⚠️  Failed to initialize Rust. UV installation may fail."
+    }
+    
+    # Source Cargo environment to ensure it's in PATH
+    [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+    
+    # Install UV via pip as a more reliable method
+    echo "Installing UV..."
+    python3 -m pip install uv || {
+        echo "⚠️  Failed to install UV via pip. Trying cargo method as fallback..."
+        
+        # Check if cargo is available
+        if command -v cargo &> /dev/null; then
+            echo "Installing UV via Cargo..."
+            cargo install uv || {
+                echo "⚠️  Failed to install UV via Cargo."
+            }
+        else
+            echo "⚠️  Cargo not found in PATH. Cannot install UV via Cargo."
+        fi
+    }
+    
+    # Verify UV installation
+    if command -v uv &> /dev/null; then
+        echo "Configuring UV..."
+        uv self update || echo "⚠️  Failed to update UV."
+        echo "✅ UV installation complete"
+    else
+        echo "⚠️  UV not found in PATH after installation. Adding Cargo bin to current PATH..."
+        export PATH="$HOME/.cargo/bin:$PATH"
+        
+        # Check again with updated PATH
+        if command -v uv &> /dev/null; then
+            echo "✅ UV found in Cargo bin directory"
+        else
+            echo "❌ UV installation failed. Please install manually."
+        fi
+    fi
+else
+    echo "⚠️  Rustup not found. Trying direct pip installation..."
+    python3 -m pip install uv || {
+        echo "❌ Failed to install UV via pip. Please install manually."
+    }
+fi
+
+# Install Aider (AI pair programming tool)
+echo "Installing Aider using UV or pip..."
+if command -v uv &> /dev/null; then
+    # If we're in a shell script, create a temporary venv for installation
+    if [ ! -n "$VIRTUAL_ENV" ]; then
+        TEMP_VENV=$(mktemp -d)/aider-venv
+        echo "Creating temporary virtual environment for Aider installation..."
+        uv venv "$TEMP_VENV"
+        source "$TEMP_VENV/bin/activate"
+    fi
+    
+    # Now install with UV in the venv or current environment
+    uv pip install aider-chat || {
+        echo "⚠️  Failed to install Aider with UV. Falling back to pip..."
+        python3 -m pip install -U pip
+        python3 -m pip install aider-chat
+    }
+    
+    # Deactivate temporary venv if we created one
+    if [ -d "$TEMP_VENV" ]; then
+        echo "Cleaning up temporary environment..."
+        deactivate
+        rm -rf "$TEMP_VENV"
+    fi
+else
+    echo "UV not found, using pip as fallback..."
+    python3 -m pip install -U pip
+    python3 -m pip install aider-chat
+fi
+
+# Verify Aider installation
+if command -v aider &> /dev/null; then
+    echo "✅ Aider installation complete"
+else
+    echo "⚠️  Aider might not be in PATH. You may need to reinstall or add it to your PATH manually."
+fi
+
+# Install Go (required for Goose)
+echo "Installing Go for Goose..."
+brew install go
+
+# Setup Goose from Block
+echo "Setting up Goose..."
+if [ ! -d "$HOME/.goose" ]; then
+    mkdir -p "$HOME/.goose"
+    echo "Created Goose directory at $HOME/.goose"
+fi
+
+# Install or update Goose CLI
+if [ ! -f "$HOME/.goose/bin/goose" ]; then
+    echo "Installing Goose CLI..."
+    curl -fsSL https://block.github.io/goose/install.sh | sh
+else
+    echo "Updating Goose CLI..."
+    curl -fsSL https://block.github.io/goose/install.sh | sh
+fi
+
+# Create .zshrc.local from template if it doesn't exist
+if [ ! -f "$HOME/.zshrc.local" ]; then
+    echo "Creating .zshrc.local from template..."
+    cp "$HOME/Projects/dotfiles/config/.zshrc.local.template" "$HOME/.zshrc.local"
+    
+    echo ""
+    echo "⚠️  IMPORTANT: Edit ~/.zshrc.local to add your API keys!"
+    echo "  • OpenAI API key for Aider: https://platform.openai.com/"
+    echo "  • Anthropic API key (optional): https://console.anthropic.com/"
+    echo "  • Goose API key: https://block.github.io/goose/docs/quickstart/"
+    echo "  • See the AI Coding Tools section in README.md for more details"
+    echo ""
+else
+    echo ".zshrc.local already exists. Not overwriting."
+fi
+
+# Final instructions
+echo ""
+echo "🎉 AI development tools setup complete!"
+echo ""
+echo "To start using AI coding tools:"
+echo "  • Aider: run 'aider' in your project directory"
+echo "  • Goose: run 'goose' in your project directory"
+echo ""
+echo "Remember to add your API keys to ~/.zshrc.local"
+echo ""
+
+###############################################################################
+# Restart affected applications                                              #
+###############################################################################
+
+log "info" "Restarting affected applications..."
+
+# Restart Finder
+killall Finder || true
+
+# Restart Dock
+killall Dock || true
+
+# Restart SystemUIServer
+killall SystemUIServer || true
+
+log "success" "macOS configuration complete. Some changes require a logout/restart to take effect."
