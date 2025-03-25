@@ -43,6 +43,10 @@ cd ~/Projects/dotfiles
 ```
 .
 ├── config/          # Configuration files
+│   ├── .gitconfig   # Git configuration
+│   ├── .zshrc       # Zsh configuration
+│   ├── local/       # Machine-specific configurations (not in git)
+│   └── ai/          # AI tool configuration templates
 ├── scripts/         # Installation and setup scripts
 └── examples/        # Example configuration files for sensitive data
 ```
@@ -77,27 +81,27 @@ The dotfiles include setup for these AI coding assistants:
 
 1. **[Aider](https://aider.chat/)** - A terminal-based AI pair programming tool
 2. **[Goose](https://block.github.io/goose/)** - Block's AI agent for software development
+3. **[Repomix](https://repomix.com/)** - Pack your codebase into a single file for LLMs
 
 #### Configuration
 
 - AI tools are installed automatically by the setup script
-- API keys are stored in `~/.zshrc.local` (created from the template)
-- Configuration files are set up in your home directory:
-  - `~/.aider.conf.yml` - Aider configuration
-  - `~/.env` - Aider environment variables
-  - `~/.config/goose/config.yaml` - Goose configuration
+- Default aliases (`ai-code`, `ai-explain`, `ai-context`) are configured in the main `.zshrc`
+- Machine-specific configs (like API keys) are stored in `config/local/.zshrc.local`
+- Configuration files are stored in your dotfiles and symlinked to your home directory:
+  - `config/local/ai/aider.conf.yml` → `~/.aider.conf.yml`
+  - `config/local/ai/.env` → `~/.env`
+  - `config/local/.zshrc.local` → `~/.zshrc.local` 
+  - `config/ai/repomix.config.json` → `~/.config/repomix/repomix.config.json`
 - Work vs. personal configurations are supported via the `--work` flag
 
 #### Getting Started with AI Tools
 
-1. **Set up your API keys** in `~/.zshrc.local` and/or `~/.env`:
+1. **Set up your API keys** in `config/local/.zshrc.local`:
    ```bash
-   # For Aider
+   # For both Aider and Goose
    export OPENAI_API_KEY="sk-..."
    export ANTHROPIC_API_KEY="sk-ant-..." # Optional
-   
-   # For Goose
-   export GOOSE_API_KEY="your_key_here"
    ```
 
 2. **Use the built-in aliases**:
@@ -107,16 +111,45 @@ The dotfiles include setup for these AI coding assistants:
    
    # Explain code in a file
    ai-explain path/to/file
+   
+   # Create a context file from your codebase (copies to clipboard)
+   ai-context
+   
+   # Start Repomix MCP server for AI assistants
+   repomix-mcp
    ```
 
-3. **Full commands**:
+3. **Repomix features**:
    ```bash
-   # Start aider with specific model
-   aider --model gpt-4o
+   # Basic usage (copy to clipboard, XML format, compressed)
+   repomix
    
-   # Use goose for explanation
-   goose explain -f path/to/file
+   # Create instruction template for better AI context
+   repomix-init-explain
+   
+   # Use with instruction file
+   repomix-explain
+   
+   # Process remote repository
+   repomix-remote user/repo
    ```
+
+4. **MCP Server**:
+   The installation automatically configures Repomix as an MCP server for VS Code (Cline extension) and Claude Desktop if installed. This allows AI assistants to directly interact with your codebase.
+   
+   - **Automatic Startup**: The MCP server is configured to start automatically when you log in
+   - **Manual Control**: If needed, you can control the service with:
+     ```bash
+     # Start the service
+     launchctl load ~/Library/LaunchAgents/com.repomix.mcp.plist
+     
+     # Stop the service
+     launchctl unload ~/Library/LaunchAgents/com.repomix.mcp.plist
+     
+     # Start manually (one-time use)
+     repomix-mcp
+     ```
+   - **Logs**: Server logs are available at `~/.repomix/logs/`
 
 #### Work vs. Personal Configuration
 
@@ -126,7 +159,7 @@ The installation script supports different configurations for work and personal 
 # Install with work settings
 ./install.sh --work
 
-# Edit your .zshrc.local to set environment
+# Edit your config/local/.zshrc.local to set environment
 ENVIRONMENT_TYPE="work"  # or "personal"
 ```
 
@@ -137,10 +170,22 @@ This affects:
 
 ## 🔐 Sensitive Configuration
 
-See the `examples/` directory for templates of sensitive configuration files. Copy these files and remove the `.example` extension, then add your personal information:
+All machine-specific configuration is stored in the `config/local/` directory, which is excluded from git by `.gitignore`.
 
-- `config/.gitconfig.local.example` → `config/.gitconfig.local`
-- `config/.zshrc.local.example` → `config/.zshrc.local`
+The install script will:
+1. Create the `config/local/` directory
+2. Create machine-specific config files from templates
+3. Symlink these files to your home directory
+
+This approach allows you to:
+- Keep all your configuration in one place
+- Avoid committing sensitive information to git
+- Easily update your dotfiles on multiple machines
+
+Key local config files:
+- `config/local/.zshrc.local` - Machine-specific zsh settings and API keys
+- `config/local/ai/aider.conf.yml` - Aider configuration  
+- `config/local/ai/.env` - Aider environment variables
 
 ## 📝 Manual Steps
 
@@ -189,4 +234,36 @@ UV settings can be customized in your `~/.zshrc.local` file:
 # Example custom UV configuration
 export UV_VIRTUALENV_PYTHON="/usr/local/bin/python3.11"
 export UV_EXTRA_INDEX_URL="https://my-custom-index/simple/"
+```
+
+### 🟩 Node.js Environment
+
+The dotfiles configure Node.js with enhanced tools for better development:
+
+1. **NVM** - Node Version Manager for switching between Node versions:
+   - Lazy-loaded for faster shell startup
+   - Automatic version switching using `.nvmrc` files
+   - Enhanced `npx` command that respects project Node versions
+
+2. **Project Management**:
+   - `create-node-project` - Create a new Node project with proper setup
+
+#### Node.js Features
+
+- **Version Management**: Auto-switching when changing directories with `.nvmrc` files
+- **Smart npx**: Uses the project's Node version based on `.nvmrc` or `package.json`
+- **Project Initialization**: Quick setup with `create-node-project [name] [version]`
+
+#### Usage Examples
+
+```bash
+# Create a new project with the latest LTS Node
+create-node-project my-project
+
+# Create a project with a specific Node version
+create-node-project my-project 18.19.0
+
+# Use npx with the project's Node version (automatic)
+cd my-project
+npx some-package
 ```

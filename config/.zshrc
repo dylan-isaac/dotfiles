@@ -92,6 +92,72 @@ if [ -s "/opt/homebrew/opt/nvm/nvm.sh" ]; then
         source "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
         nvm "$@"
     }
+    
+    # Enhanced npx that respects project Node version
+    npx() {
+        if [ -f .nvmrc ] || [ -f .node-version ] || [ -f package.json ]; then
+            # Unset the lazy-loaded function so we load nvm properly
+            unset -f nvm
+            source "/opt/homebrew/opt/nvm/nvm.sh" --no-use
+            
+            # Switch to the project's Node version before running npx
+            nvm use &> /dev/null
+            # Run npx with the project's Node version
+            command npx "$@"
+            
+            # Optionally, switch back to default
+            # nvm use default &> /dev/null
+        else
+            command npx "$@"
+        fi
+    }
+    
+    # Create a new Node project with proper setup
+    function create-node-project() {
+        local project_name="${1:?Project name is required}"
+        local node_version="${2:-lts/*}"
+        
+        # Create project directory
+        mkdir -p "$project_name"
+        cd "$project_name" || return
+        
+        # Set up Node version
+        nvm install "$node_version"
+        nvm use "$node_version"
+        echo "$node_version" > .nvmrc
+        
+        # Initialize package.json
+        npm init -y
+        
+        echo "Node project '$project_name' created with Node version $(node -v)"
+        echo "To get started:"
+        echo "  cd $project_name"
+        echo "  npm install your-dependencies"
+    }
+    
+    # Activate the correct Node version automatically when changing directories
+    autoload -U add-zsh-hook
+    load-nvmrc() {
+        local nvmrc_path="$(nvm_find_nvmrc)"
+        
+        if [ -n "$nvmrc_path" ]; then
+            local nvmrc_node_version=$(cat "${nvmrc_path}")
+            
+            if [ "$nvmrc_node_version" = "$(nvm version)" ]; then
+                # Version is already correct
+                return
+            fi
+            
+            # Load NVM if not already loaded
+            unset -f nvm
+            source "/opt/homebrew/opt/nvm/nvm.sh" --no-use
+            
+            # Switch to the correct version
+            nvm use &> /dev/null
+        fi
+    }
+    add-zsh-hook chpwd load-nvmrc
+    load-nvmrc
 fi
 
 # Python Environment
@@ -220,22 +286,61 @@ eval "$(starship init zsh)"
 # AI coding tools configuration and aliases
 # For full configuration, see the AI Coding Tools section in README.md
 
-# Basic aliases for AI coding tools - uncomment and customize as needed
-# alias aider='aider --temperature 0.0'  # Lower temperature for more deterministic responses
-# alias goose='goose'                    # Block's AI development tool
+# Basic AI coding tool aliases
+alias aider='aider --temperature 0.0'  # Lower temperature for more deterministic responses
+alias goose='goose'                    # Block's AI development tool
 
-# Examples of helpful AI tool aliases (uncomment and modify as needed)
-# alias ai-code='aider --model gpt-4o'  # Example: Quick access to preferred AI coding assistant
-# alias explain='goose explain -f'      # Example: Explain code in a file
+# Repomix configuration and aliases
+# Core repomix alias - optimized for clipboard use with standard settings
+alias repomix='npx repomix --copy --style xml --compress --remove-empty-lines'
+
+# Additional specialized repomix aliases
+alias repomix-clip='repomix --copy'                   # Copy output to clipboard
+alias repomix-explain='repomix --instruction-file-path .repomix-explain.md'  # Add explain instructions
+alias repomix-compress='repomix --compress'           # Use the compression mode
+alias repomix-mcp='repomix --mcp'                     # Start MCP server
+alias repomix-remote='repomix --remote'               # Process remote repository
+
+# Quickly create a repomix instruction file
+function repomix-init-explain() {
+  cat > .repomix-explain.md << 'EOF'
+# Repository Analysis Instructions
+
+Please analyze this codebase with the following focus:
+
+1. Application structure and architecture
+2. Main components and their responsibilities
+3. Key data flows and interactions
+4. Suggested improvements or refactoring opportunities
+5. Potential bugs or issues
+
+Please ignore test files and focus on the core application logic.
+EOF
+  echo "Created .repomix-explain.md in the current directory"
+  echo "Use 'repomix-explain' to include these instructions with the codebase"
+}
+
+# Common AI tool aliases
+alias ai-code='aider --model gpt-4o'   # Quick access to preferred AI coding assistant
+alias ai-explain='goose explain -f'    # Explain code in a file
+alias ai-context='repomix'             # Copy codebase context to clipboard
 
 # Example of a simple AI helper function
-# function ai-help() {
-#   echo "========== AI Coding Assistant Commands =========="
-#   echo "See the AI Coding Tools section in README.md for complete documentation"
-#   echo "Remember to configure your API keys in ~/.zshrc.local"
-# }
+function ai-help() {
+  echo "========== AI Coding Assistant Commands =========="
+  echo "ai-code    - Start AI coding assistant with GPT-4o"
+  echo "ai-explain - Explain code in a file"
+  echo "ai-context - Generate context from codebase (with repomix)"
+  echo "aider      - Start aider with lower temperature"
+  echo "goose      - Block's AI development tool"
+  echo "repomix    - Generate codebase context for LLMs"
+  echo "repomix-mcp - Start repomix MCP server for AI assistants"
+  echo ""
+  echo "See the AI Coding Tools section in README.md for complete documentation"
+  echo "API keys should be configured in ~/.zshrc.local"
+}
 
-# Example helper functions (uncomment and modify as needed)
+# Additional helper functions (uncomment and modify as needed)
 # 
 # # Clone a repo and start aider with it
 # function aider-repo() {

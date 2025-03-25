@@ -1,1 +1,16 @@
+# Generated files and directories
 repomix-output.xml
+
+# Machine-specific configs 
+config/local/
+*.local
+*.local.*
+.env
+
+# macOS
+.DS_Store
+
+# Backup files
+*.backup
+*.bak
+.dotfiles.backup*
