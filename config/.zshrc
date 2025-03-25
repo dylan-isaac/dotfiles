@@ -135,29 +135,47 @@ if [ -s "/opt/homebrew/opt/nvm/nvm.sh" ]; then
         echo "  npm install your-dependencies"
     }
     
+    # Load NVM functions without initializing NVM (for faster startup)
+    source "/opt/homebrew/opt/nvm/nvm.sh" --no-use >/dev/null 2>&1
+    
     # Activate the correct Node version automatically when changing directories
     autoload -U add-zsh-hook
     load-nvmrc() {
-        local nvmrc_path="$(nvm_find_nvmrc)"
+        local nvmrc_path=""
+        
+        # Safely try to find nvmrc 
+        if type nvm_find_nvmrc >/dev/null 2>&1; then
+            nvmrc_path="$(nvm_find_nvmrc)"
+        else
+            # Fallback method if nvm_find_nvmrc isn't available
+            if [[ -f .nvmrc && -r .nvmrc ]]; then
+                nvmrc_path=".nvmrc"
+            fi
+        fi
         
         if [ -n "$nvmrc_path" ]; then
             local nvmrc_node_version=$(cat "${nvmrc_path}")
             
-            if [ "$nvmrc_node_version" = "$(nvm version)" ]; then
-                # Version is already correct
-                return
+            # Load NVM fully if it hasn't been loaded yet
+            if ! type nvm >/dev/null 2>&1 || [ "$(type nvm)" = "nvm is a shell function" ]; then
+                unset -f nvm >/dev/null 2>&1
+                source "/opt/homebrew/opt/nvm/nvm.sh" --no-use
             fi
             
-            # Load NVM if not already loaded
-            unset -f nvm
-            source "/opt/homebrew/opt/nvm/nvm.sh" --no-use
-            
-            # Switch to the correct version
-            nvm use &> /dev/null
+            # Check if version needs changing
+            if [ "$nvmrc_node_version" != "$(nvm version)" ]; then
+                nvm use &> /dev/null
+            fi
         fi
     }
+    
+    # Hook into directory change
     add-zsh-hook chpwd load-nvmrc
-    load-nvmrc
+    
+    # Initial load at startup (only if we're in a directory with .nvmrc)
+    if [[ -f .nvmrc ]]; then
+        load-nvmrc
+    fi
 fi
 
 # Python Environment
@@ -291,69 +309,50 @@ alias aider='aider --temperature 0.0'  # Lower temperature for more deterministi
 alias goose='goose'                    # Block's AI development tool
 
 # Repomix configuration and aliases
-# Core repomix alias - optimized for clipboard use with standard settings
-alias repomix='npx repomix --copy --style xml --compress --remove-empty-lines'
 
-# Additional specialized repomix aliases
-alias repomix-clip='repomix --copy'                   # Copy output to clipboard
-alias repomix-explain='repomix --instruction-file-path .repomix-explain.md'  # Add explain instructions
-alias repomix-compress='repomix --compress'           # Use the compression mode
-alias repomix-mcp='repomix --mcp'                     # Start MCP server
-alias repomix-remote='repomix --remote'               # Process remote repository
-
-# Quickly create a repomix instruction file
-function repomix-init-explain() {
-  cat > .repomix-explain.md << 'EOF'
-# Repository Analysis Instructions
-
-Please analyze this codebase with the following focus:
-
-1. Application structure and architecture
-2. Main components and their responsibilities
-3. Key data flows and interactions
-4. Suggested improvements or refactoring opportunities
-5. Potential bugs or issues
-
-Please ignore test files and focus on the core application logic.
-EOF
-  echo "Created .repomix-explain.md in the current directory"
-  echo "Use 'repomix-explain' to include these instructions with the codebase"
+# Custom function for repomix with reliable clipboard copy
+function run-repomix() {
+    local output_file="repomix-output.txt"
+    local style=${1:-"plain"}
+    local compress=${2:-"--compress"}
+    local remove_empty=${3:-"--remove-empty-lines"}
+    
+    # Run repomix with specified options
+    npx repomix --style "$style" $compress $remove_empty -o "$output_file"
+    
+    # Check if file was created
+    if [ -f "$output_file" ]; then
+        # Copy to clipboard based on OS
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS
+            cat "$output_file" | pbcopy
+            echo "✅ Copied to clipboard"
+        elif command -v xclip &> /dev/null; then
+            # Linux with xclip
+            cat "$output_file" | xclip -selection clipboard
+            echo "✅ Copied to clipboard"
+        elif command -v clip &> /dev/null; then
+            # Windows
+            cat "$output_file" | clip
+            echo "✅ Copied to clipboard"
+        else
+            echo "⚠️ Clipboard copy not supported on this system"
+        fi
+        
+        # Clean up
+        rm "$output_file"
+    else
+        echo "⚠️ Failed to generate repomix output"
+    fi
 }
+
+# Core repomix aliases with custom functions for reliable clipboard use
+alias context='run-repomix xml'             # XML format with compression
+alias context-md='run-repomix markdown'     # Markdown with compression
+alias context-full='run-repomix xml ""'     # XML without compression (full code)
 
 # Common AI tool aliases
-alias ai-code='aider --model gpt-4o'   # Quick access to preferred AI coding assistant
-alias ai-explain='goose explain -f'    # Explain code in a file
-alias ai-context='repomix'             # Copy codebase context to clipboard
-
-# Example of a simple AI helper function
-function ai-help() {
-  echo "========== AI Coding Assistant Commands =========="
-  echo "ai-code    - Start AI coding assistant with GPT-4o"
-  echo "ai-explain - Explain code in a file"
-  echo "ai-context - Generate context from codebase (with repomix)"
-  echo "aider      - Start aider with lower temperature"
-  echo "goose      - Block's AI development tool"
-  echo "repomix    - Generate codebase context for LLMs"
-  echo "repomix-mcp - Start repomix MCP server for AI assistants"
-  echo ""
-  echo "See the AI Coding Tools section in README.md for complete documentation"
-  echo "API keys should be configured in ~/.zshrc.local"
-}
-
-# Additional helper functions (uncomment and modify as needed)
-# 
-# # Clone a repo and start aider with it
-# function aider-repo() {
-#   local repo_url="$1"
-#   local branch="${2:-main}"
-#   local temp_dir=$(mktemp -d)
-#   
-#   echo "Cloning $repo_url ($branch) to $temp_dir..."
-#   git clone --branch "$branch" "$repo_url" "$temp_dir"
-#   
-#   echo "Starting aider with the repository..."
-#   cd "$temp_dir" && aider
-# }
+alias coder='aider --model gpt-4o'          # Quick access to preferred AI coding assistant
 
 # -----------------------------
 # 11. Custom Configuration

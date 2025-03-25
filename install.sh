@@ -121,12 +121,42 @@ setup_homebrew() {
     
     # Verify Homebrew is working properly
     if ! brew doctor &>/dev/null; then
-        log "warn" "Homebrew has issues that may affect installation. Running brew doctor:"
-        brew doctor || true
-        read -p "Continue with installation? (y/n) " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            critical_error "Installation aborted by user due to Homebrew issues"
+        log "warn" "Homebrew has issues that may affect installation."
+        
+        # Get the full output for analysis
+        local doctor_output=$(brew doctor 2>&1)
+        
+        # Check for common known issues that can be safely ignored
+        if echo "$doctor_output" | grep -q "pkg-config" && echo "$doctor_output" | grep -q "pkgconf"; then
+            log "info" "Detected common pkg-config/pkgconf conflict - this is normal and can be ignored"
+            log "info" "This means you have both pkg-config and pkgconf installed, which is fine"
+            log "info" "After installation, you can choose which one to use with 'brew unlink pkgconf && brew link pkg-config'"
+        # Check for unlinked kegs specifically
+        elif echo "$doctor_output" | grep -q "unlinked kegs"; then
+            local unlinked_kegs=$(echo "$doctor_output" | grep -A 20 "unlinked kegs" | grep -B 20 "Run \`brew link\` on these:" | grep "  " | tr -d ' ')
+            
+            if [[ -n "$unlinked_kegs" ]]; then
+                log "info" "Found unlinked kegs: $unlinked_kegs"
+                log "info" "Attempting to link unlinked kegs automatically..."
+                
+                for keg in $unlinked_kegs; do
+                    log "info" "Linking $keg..."
+                    brew link "$keg" 2>/dev/null || log "warn" "Failed to link $keg, continuing anyway"
+                done
+                
+                log "info" "Finished linking kegs"
+            fi
+        else
+            # General issues that weren't automatically fixed, show full output
+            log "warn" "Homebrew has issues that couldn't be automatically fixed:"
+            echo "$doctor_output"
+            
+            # Use printf instead of read -p for better shell compatibility
+            printf "Continue with installation? (y/n) "
+            read answer
+            if [[ ! $answer =~ ^[Yy]$ ]]; then
+                critical_error "Installation aborted by user due to Homebrew issues"
+            fi
         fi
     fi
 }
