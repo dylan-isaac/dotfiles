@@ -198,7 +198,12 @@ ls -la bin/install-analyzer.sh
    - **Success Case**: Installation output is displayed in real-time while also being captured
    - **Failure Case**: Output not shown or not properly captured
 
-4. **Mock Installation Testing**
+4. **Config-Only Mode**
+   - **Command**: `./bin/install-analyzer.sh --config-only`
+   - **Success Case**: Only performs symlinks and configuration, no installations, with proper analysis
+   - **Failure Case**: Still attempts installations or fails to analyze config-only mode results
+
+5. **Mock Installation Testing**
    - **Command**: `./tests/test_install_analyzer.sh`
    - **Success Case**: Script generates mock logs and runs analysis on predefined issues
    - **Failure Case**: Test fails or doesn't analyze the mock logs

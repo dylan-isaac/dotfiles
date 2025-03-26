@@ -90,6 +90,7 @@ These tests verify that scripts:
 - Produce expected output
 - Handle errors gracefully
 - Function in different environments
+- Support all installation modes (--quick, --skip-apps, --config-only)
 
 ### Profile Tests
 
@@ -101,6 +102,7 @@ These tests verify that the profile system:
   - Template directories for each profile
   - Brewfiles for each profile
 - Handles edge cases appropriately
+- Functions correctly with all installation modes, including --config-only
 
 The profile tests are streamlined to be fast and efficient without requiring full installation script execution. To run the profile tests specifically:
 

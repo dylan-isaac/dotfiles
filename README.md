@@ -28,11 +28,15 @@ cd ~/Projects/dotfiles
 # Quick mode - skip all Homebrew operations and installations that are already complete
 ./install.sh --quick
 
+# Config-only mode - only perform symlinks and configuration, no installations
+./install.sh --config-only
+
 # Install with a specific profile
 ./install.sh --profile=<profile_name>
 
 # Combine options
 ./install.sh --quick --skip-apps --profile=minimal
+./install.sh --config-only --profile=work
 
 # Use AI-powered installation analyzer
 ./bin/install-analyzer.sh --ai=goose --profile=work
@@ -407,4 +411,5 @@ create-node-project my-project 18.19.0
 # Use npx with the project's Node version (automatic)
 cd my-project
 npx some-package
+```
 ```

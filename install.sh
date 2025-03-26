@@ -19,6 +19,7 @@ done
 
 SKIP_APPS=false
 QUICK_MODE=false
+CONFIG_ONLY=false
 PROFILE="personal"  # Default profile
 
 # Text formatting
@@ -33,6 +34,7 @@ while [[ "$#" -gt 0 ]]; do
     case $1 in
         --skip-apps) SKIP_APPS=true ;;
         --quick) QUICK_MODE=true ;;
+        --config-only) CONFIG_ONLY=true ;;
         --profile=*) PROFILE="${1#*=}" ;;
         --profile) 
             if [[ -n "$2" && "$2" != --* ]]; then
@@ -48,8 +50,9 @@ while [[ "$#" -gt 0 ]]; do
             echo "Options:"
             echo "  --skip-apps            Skip installation of applications"
             echo "  --quick                Skip all Homebrew operations and installations that are already complete"
-            echo "  --profile=<n>       Use specific profile for configuration (personal, work, server)"
-            echo "  --profile <n>       Use specific profile for configuration (personal, work, server)"
+            echo "  --config-only          Only perform symlinks and configuration, no installations"
+            echo "  --profile=<n>          Use specific profile for configuration (personal, work, server)"
+            echo "  --profile <n>          Use specific profile for configuration (personal, work, server)"
             echo "  --help                 Show this help message"
             exit 0
             ;;
@@ -935,6 +938,10 @@ main() {
         log "info" "Running in quick mode - will skip all Homebrew operations and installations that are already complete"
     fi
     
+    if [ "$CONFIG_ONLY" = true ]; then
+        log "info" "Running in config-only mode - will only perform symlinks and configuration, no installations"
+    fi
+    
     if [ "$PROFILE" = "work" ]; then
         log "info" "Configuring for work environment"
     else
@@ -945,20 +952,24 @@ main() {
     mkdir -p "$BACKUP_DIR"
     log "info" "Backup directory created at $BACKUP_DIR"
     
-    # Critical foundation components
-    check_system_requirements
-    setup_homebrew || critical_error "Homebrew setup failed"
-    install_core_tools || critical_error "Core tools installation failed"
-    
-    # Setup tools (less critical, can proceed with warnings)
-    setup_uv          # Python packaging
-    setup_shell       # Zsh configuration
-    
-    # Applications (optional based on flags)
-    install_applications
-    
-    # AI development tools (depends on Python/UV)
-    setup_ai_tools
+    if [ "$CONFIG_ONLY" = false ]; then
+        # Critical foundation components
+        check_system_requirements
+        setup_homebrew || critical_error "Homebrew setup failed"
+        install_core_tools || critical_error "Core tools installation failed"
+        
+        # Setup tools (less critical, can proceed with warnings)
+        setup_uv          # Python packaging
+        setup_shell       # Zsh configuration
+        
+        # Applications (optional based on flags)
+        install_applications
+        
+        # AI development tools (depends on Python/UV)
+        setup_ai_tools
+    else
+        log "info" "Skipping all installation steps due to --config-only flag"
+    fi
     
     # Configuration (final step)
     link_configuration_files
@@ -968,34 +979,40 @@ main() {
     export PATH="$HOME/.local/bin:$PATH"
     export PATH="$HOME/.goose/bin:$PATH"
     
-    # Verify
-    verify_installation
+    # Verify installation only if not in config-only mode
+    if [ "$CONFIG_ONLY" = false ]; then
+        verify_installation
+    fi
     
     # Print summary
     log "success" "Installation complete! 🎉"
     log "info" "Configuration summary:"
     log "info" "  • Environment: $([ "$PROFILE" = "work" ] && echo "Work" || echo "Personal")"
     log "info" "  • Profile: $PROFILE"
+    log "info" "  • Config only: $([ "$CONFIG_ONLY" = true ] && echo "Enabled (only symlinks and configuration)" || echo "Disabled")"
     log "info" "  • Quick mode: $([ "$QUICK_MODE" = true ] && echo "Enabled (skipped Homebrew operations)" || echo "Disabled")"
-    log "info" "  • App installation: $([ "$SKIP_APPS" = true ] && echo "Skipped" || echo "Performed")"
+    log "info" "  • App installation: $([ "$SKIP_APPS" = true ] || [ "$CONFIG_ONLY" = true ] && echo "Skipped" || echo "Performed")"
     log "info" "  • Backup directory: $BACKUP_DIR"
     
-    # AI tools summary
-    log "info" "AI tools:"
-    if command -v aider &>/dev/null; then
-        log "success" "  • Aider: Installed and available ($(aider --version 2>/dev/null || echo 'unknown version'))"
-    else 
-        log "warn" "  • Aider: Not found in PATH"
-        log "info" "    Run 'source ~/.zshrc' or restart your terminal to access Aider"
-    fi
-    
-    if command -v goose &>/dev/null; then
-        log "success" "  • Goose: Installed and available"
-    elif [ -f "$HOME/.goose/bin/goose" ]; then
-        log "warn" "  • Goose: Installed but not in PATH"
-        log "info" "    Run 'source ~/.zshrc' or restart your terminal to access Goose"
-    else
-        log "warn" "  • Goose: Not installed or not found"
+    # Skip AI tools summary in config-only mode
+    if [ "$CONFIG_ONLY" = false ]; then
+        # AI tools summary
+        log "info" "AI tools:"
+        if command -v aider &>/dev/null; then
+            log "success" "  • Aider: Installed and available ($(aider --version 2>/dev/null || echo 'unknown version'))"
+        else 
+            log "warn" "  • Aider: Not found in PATH"
+            log "info" "    Run 'source ~/.zshrc' or restart your terminal to access Aider"
+        fi
+        
+        if command -v goose &>/dev/null; then
+            log "success" "  • Goose: Installed and available"
+        elif [ -f "$HOME/.goose/bin/goose" ]; then
+            log "warn" "  • Goose: Installed but not in PATH"
+            log "info" "    Run 'source ~/.zshrc' or restart your terminal to access Goose"
+        else
+            log "warn" "  • Goose: Not installed or not found"
+        fi
     fi
     
     # Configuration files

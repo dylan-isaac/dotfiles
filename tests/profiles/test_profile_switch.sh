@@ -26,6 +26,7 @@ echo -e "1. Testing profile switching for all profiles"
 echo -e "2. Verifying existence of all profile-specific files"
 echo -e "3. Checking template directories and Brewfiles"
 echo -e "4. Validating profile integrity"
+echo -e "5. Testing compatibility with installation modes"
 echo -e "${BLUE}==============================================${NC}\n"
 
 # Helper function to set and verify a profile
@@ -135,12 +136,48 @@ else
 fi
 
 echo -e "\n${BLUE}==============================================${NC}"
+echo -e "${YELLOW}[Section 4]${NC} Testing installation modes"
+echo -e "${BLUE}==============================================${NC}"
+
+# Verify quick mode support
+if grep -q -- "--quick" "$DOTFILES_DIR/install.sh"; then
+    echo -e "${GREEN}✅ install.sh supports --quick flag${NC}"
+else
+    echo -e "${RED}❌ install.sh doesn't support --quick flag${NC}"
+    exit 1
+fi
+
+# Verify skip-apps mode support
+if grep -q -- "--skip-apps" "$DOTFILES_DIR/install.sh"; then
+    echo -e "${GREEN}✅ install.sh supports --skip-apps flag${NC}"
+else
+    echo -e "${RED}❌ install.sh doesn't support --skip-apps flag${NC}"
+    exit 1
+fi
+
+# Verify config-only mode support
+if grep -q -- "--config-only" "$DOTFILES_DIR/install.sh"; then
+    echo -e "${GREEN}✅ install.sh supports --config-only flag${NC}"
+else
+    echo -e "${RED}❌ install.sh doesn't support --config-only flag${NC}"
+    exit 1
+fi
+
+# Verify that config-only flag works with profile switching
+if grep -q -A10 "CONFIG_ONLY" "$DOTFILES_DIR/install.sh" | grep -q "PROFILE"; then
+    echo -e "${GREEN}✅ install.sh correctly processes --config-only with profiles${NC}"
+else
+    echo -e "${YELLOW}⚠️  Warning: Profile handling with --config-only needs manual verification${NC}"
+fi
+
+echo -e "\n${BLUE}==============================================${NC}"
 echo -e "${GREEN}        ALL PROFILE TESTS PASSED!            ${NC}"
 echo -e "${BLUE}==============================================${NC}"
 echo -e "✅ Profile switching works correctly"
 echo -e "✅ All profile-specific directories exist"
 echo -e "✅ All profile-specific Brewfiles exist"
 echo -e "✅ install.sh supports profile flags"
+echo -e "✅ install.sh supports all installation modes"
 echo -e "✅ Original profile ($ORIGINAL_PROFILE) was restored"
 echo -e "${BLUE}==============================================${NC}"
 exit 0 
