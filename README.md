@@ -1,12 +1,12 @@
 # Dylan's Dotfiles
 
-This repository contains my personal dotfiles and system configuration scripts. It's designed to make setting up a new Mac system quick and consistent.
+A comprehensive personal environment management system for macOS. This repository serves as the central hub for customizing, configuring, and maintaining your development environment with AI-assisted automation.
 
 ## 🚀 Quick Start
 
 ```bash
 # Clone this repository
-git clone https://github.com/dylansheffer/dotfiles.git ~/Projects/dotfiles
+git clone https://github.com/dylan-isaac/dotfiles.git ~/Projects/dotfiles
 
 # Run the installation script
 cd ~/Projects/dotfiles
@@ -35,33 +35,32 @@ cd ~/Projects/dotfiles
 ./install.sh --quick --skip-apps --profile=minimal
 ```
 
-## 📦 What's Included
+## 📦 System Overview
 
-- `zsh` configuration with modern CLI tools
-- macOS system preferences configuration
-- Git configuration
-- Homebrew package installation
-- Development tools setup
-- Terminal configuration (iTerm2)
+This dotfiles repository is designed as a complete system with several key components:
+
+- **Configuration Management**: Core configurations for your shell, tools, and applications
+- **Profile System**: Environment-specific configurations you can switch between
+- **AI Tools Integration**: Setup for AI coding assistants and workflows
+- **Installation Automation**: Scripts to set up your environment consistently
+- **Documentation**: README files in each directory explaining its purpose
 
 ### Directory Structure
 
 ```
 .
-├── bin/              # Scripts and utilities
-│   ├── director.py   # AI Developer Workflow director
-│   └── generate_config.py # Configuration generator
-├── config/          # Configuration files
-│   ├── .gitconfig   # Git configuration
-│   ├── .zshrc       # Zsh configuration
-│   ├── profiles/    # Profile definitions
-│   ├── goose/       # Goose configuration templates
-│   ├── aider/       # Aider configuration templates
-│   ├── adw/         # AI Developer Workflow configurations
-│   └── local/       # Machine-specific configurations (not in git)
-├── scripts/         # Installation and setup scripts
-└── examples/        # Example configuration files for sensitive data
+├── README.md          # Main documentation (you are here)
+├── CHANGELOG.md       # System modification history
+├── bin/               # Core scripts and utilities
+├── config/            # Configuration files for all tools
+├── contexts/          # Context files for AI tools and reference
+├── examples/          # Example configuration templates
+├── packages/          # Package management (Homebrew, npm, etc.)
+├── scripts/           # Installation and setup scripts
+└── tests/             # System integrity tests
 ```
+
+Each directory contains its own README with detailed information about its purpose and how to modify its contents.
 
 ## 🔧 Components
 
@@ -110,71 +109,6 @@ The Director pattern (described in [`contexts/ADW.md`](contexts/ADW.md)) allows 
    ai-workflow --list
    ```
 
-### Configuration
-
-- All AI tool configurations are managed through the profile system
-- Each profile can specify:
-  - Which extensions to enable in Goose
-  - Default models to use in Aider
-  - AI Developer Workflow settings
-  - Custom shell aliases
-
-#### Getting Started with AI Tools
-
-1. **Set up your API keys** in `config/local/.zshrc.local`:
-   ```bash
-   # For both Aider and Goose
-   export OPENAI_API_KEY="sk-..."
-   export ANTHROPIC_API_KEY="sk-ant-..." # Optional
-   ```
-
-2. **Use the built-in aliases**:
-   ```bash
-   # Start AI coding assistant with preferred model
-   ai-code
-   
-   # Explain code in a file
-   ai-explain path/to/file
-   
-   # Create a context file from your codebase (copies to clipboard)
-   ai-context
-   
-   # Start Repomix MCP server for AI assistants
-   repomix-mcp
-   ```
-
-3. **Repomix features**:
-   ```bash
-   # Basic usage (copy to clipboard, XML format, compressed)
-   repomix
-   
-   # Create instruction template for better AI context
-   repomix-init-explain
-   
-   # Use with instruction file
-   repomix-explain
-   
-   # Process remote repository
-   repomix-remote user/repo
-   ```
-
-4. **MCP Server**:
-   The installation automatically configures Repomix as an MCP server for VS Code (Cline extension) and Claude Desktop if installed. This allows AI assistants to directly interact with your codebase.
-   
-   - **Automatic Startup**: The MCP server is configured to start automatically when you log in
-   - **Manual Control**: If needed, you can control the service with:
-     ```bash
-     # Start the service
-     launchctl load ~/Library/LaunchAgents/com.repomix.mcp.plist
-     
-     # Stop the service
-     launchctl unload ~/Library/LaunchAgents/com.repomix.mcp.plist
-     
-     # Start manually (one-time use)
-     repomix-mcp
-     ```
-   - **Logs**: Server logs are available at `~/.repomix/logs/`
-
 ## 🔐 Sensitive Configuration
 
 All machine-specific configuration is stored in the `config/local/` directory, which is excluded from git by `.gitignore`.
@@ -184,11 +118,6 @@ The install script will:
 2. Create machine-specific config files from templates
 3. Symlink these files to your home directory
 
-This approach allows you to:
-- Keep all your configuration in one place
-- Avoid committing sensitive information to git
-- Easily update your dotfiles on multiple machines
-
 Key local config files:
 - `config/local/.zshrc.local` - Machine-specific zsh settings and API keys
 - `config/local/ai/aider.conf.yml` - Aider configuration  
@@ -196,72 +125,41 @@ Key local config files:
 
 ## 📋 Profile System
 
-The dotfiles repository now includes a comprehensive profile system that allows you to easily switch between different configuration setups for various environments.
-
-### Available Profiles
-
-- **personal** - Full-featured development environment with all tools and games
-- **work** - Work-focused setup without games and entertainment apps
-- **server** - Minimal CLI-only setup for servers
-
-### Managing Profiles
-
-Once installed, you can manage profiles using the `dotfiles-profile` command:
+The profile system allows you to easily switch between different configuration setups:
 
 ```bash
 # List available profiles
 dotfiles-profile list
 
-# Show current profile
-dotfiles-profile show
-
 # Switch to a different profile
 dotfiles-profile set work
-
-# Re-apply current profile settings
-dotfiles-profile apply
 
 # Show help
 dotfiles-profile help
 ```
 
-### Creating Custom Profiles
+See the [Profile System documentation](config/profiles/README.md) for more details.
 
-You can create your own profiles by copying and modifying existing profile templates:
+## 🔄 Maintaining Your System
 
-1. Create a new profile file:
-   ```bash
-   cp config/profiles/personal.yaml config/profiles/custom.yaml
-   ```
+This repository includes tools for maintaining system integrity:
 
-2. Edit the new profile file to adjust settings:
-   ```bash
-   vim config/profiles/custom.yaml
-   ```
+- **System Tests**: Run `./tests/run_tests.sh` to verify your configuration
+- **Changelog**: System modifications are tracked in `CHANGELOG.md`
+- **ADW for Maintenance**: Use AI workflows for system updates and maintenance
 
-3. Apply your new profile:
-   ```bash
-   dotfiles-profile set custom
-   ```
+For details on system maintenance, see [ADW.md](ADW.md).
 
-### What Profiles Configure
+## 📝 Extending Your System
 
-Each profile can configure:
+Each component can be extended and customized:
 
-- **Environment Type** - personal, work, or server
-- **Package Selection** - Which applications to install via Homebrew
-- **AI Tool Settings** - Configurations for Goose, Aider, and AI Developer Workflows
-- **Shell Aliases** - Custom aliases for the current profile
-- **Default Models** - Which AI models to use by default
+1. **Profiles**: Add new profiles in `config/profiles/`
+2. **Packages**: Modify package lists in `packages/`
+3. **Configuration**: Add tool configs in `config/`
+4. **AI Workflows**: Create new workflows in `config/adw/`
 
-## 📝 Manual Steps
-
-Some things still need to be done manually:
-
-1. Generate SSH keys and add to GitHub
-2. Sign in to App Store
-3. Configure Apple ID
-4. Install App Store applications
+See the README in each directory for specific extension guidelines.
 
 ## 🔄 Updating
 
@@ -278,7 +176,9 @@ git pull
 
 ## 📜 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0) - see the [LICENSE](LICENSE) file for details.
+
+This means you can freely share and adapt the code for non-commercial purposes, as long as you provide attribution to the original author.
 
 ### 🐍 Python Environment
 
