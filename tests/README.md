@@ -95,10 +95,18 @@ These tests verify that scripts:
 
 These tests verify that the profile system:
 
-- Correctly generates configuration from profiles
-- Properly switches between profiles
-- Applies changes as expected
+- Correctly manages profiles with the simplified flag-based approach
+- Properly sets the current profile in the `.current_profile` file
+- Validates existence of all required profile-specific files:
+  - Template directories for each profile
+  - Brewfiles for each profile
 - Handles edge cases appropriately
+
+The profile tests are streamlined to be fast and efficient without requiring full installation script execution. To run the profile tests specifically:
+
+```bash
+./tests/profiles/test_profile_switch.sh
+```
 
 ## Adding New Tests
 

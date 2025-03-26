@@ -19,7 +19,6 @@ done
 
 SKIP_APPS=false
 QUICK_MODE=false
-WORK_ENV=false
 PROFILE="personal"  # Default profile
 
 # Text formatting
@@ -34,7 +33,6 @@ while [[ "$#" -gt 0 ]]; do
     case $1 in
         --skip-apps) SKIP_APPS=true ;;
         --quick) QUICK_MODE=true ;;
-        --work) WORK_ENV=true ;;
         --profile=*) PROFILE="${1#*=}" ;;
         --profile) 
             if [[ -n "$2" && "$2" != --* ]]; then
@@ -50,9 +48,8 @@ while [[ "$#" -gt 0 ]]; do
             echo "Options:"
             echo "  --skip-apps            Skip installation of applications"
             echo "  --quick                Skip all Homebrew operations and installations that are already complete"
-            echo "  --work                 Configure for work environment (different AI settings)"
-            echo "  --profile=<name>       Use specific profile for configuration"
-            echo "  --profile <name>       Use specific profile for configuration"
+            echo "  --profile=<n>       Use specific profile for configuration (personal, work, server)"
+            echo "  --profile <n>       Use specific profile for configuration (personal, work, server)"
             echo "  --help                 Show this help message"
             exit 0
             ;;
@@ -60,6 +57,14 @@ while [[ "$#" -gt 0 ]]; do
     esac
     shift
 done
+
+# Save the current profile for reference
+echo "$PROFILE" > "$DOTFILES_DIR/.current_profile"
+
+# Set WORK_ENV based on profile
+if [ "$PROFILE" = "work" ]; then
+    WORK_ENV=true
+fi
 
 # Log function with timestamps
 log() {
@@ -691,18 +696,13 @@ EOF
 setup_ai_configurations() {
     log "info" "Setting up AI tool configuration files..."
     
-    # Create AI config directories
-    mkdir -p "$HOME/.config/aider" 2>/dev/null || true
-    mkdir -p "$HOME/.config/goose" 2>/dev/null || true
-    mkdir -p "$LOCAL_CONFIG_DIR/ai" 2>/dev/null || true
-    
-    # Create base directories for config files
+    # Prepare directories
     AI_CONFIG_DIR="$DOTFILES_DIR/config/ai"
     LOCAL_AI_CONFIG_DIR="$LOCAL_CONFIG_DIR/ai"
     
     # Determine which templates to use based on environment
     local template_suffix=""
-    if [ "$WORK_ENV" = true ]; then
+    if [ "$PROFILE" = "work" ]; then
         template_suffix=".work"
         log "info" "Using work environment configuration for AI tools"
     else
@@ -782,39 +782,16 @@ link_configuration_files() {
     mkdir -p "$HOME/.config/dotfiles"
     mkdir -p "$LOCAL_CONFIG_DIR"
 
-    # Generate configs from profile if profile system is set up
-    if [ -f "$DOTFILES_DIR/bin/generate_config.py" ]; then
-        log "info" "Using profile system to generate configurations..."
-        
-        # Run generate_config.py to generate configs from the specified profile
-        python "$DOTFILES_DIR/bin/generate_config.py" --profile "$PROFILE" --apply || log "warn" "Failed to generate configs from profile"
-        
-        # Set the current profile
-        echo "$PROFILE" > "$CONFIG_DIR/.current_profile"
-        
-        # Set WORK_ENV based on profile if not explicitly set
-        if [ "$WORK_ENV" = false ] && [ -f "$DOTFILES_DIR/config/profiles/$PROFILE.yaml" ]; then
-            PROFILE_TYPE=$(grep "environment_type" "$DOTFILES_DIR/config/profiles/$PROFILE.yaml" | awk '{print $2}' | tr -d '"')
-            if [ "$PROFILE_TYPE" = "work" ]; then
-                log "info" "Setting work environment based on profile type"
-                WORK_ENV=true
-            fi
-        fi
-    else
-        # Link configuration files in the traditional way
-        log "info" "Using traditional method to link configuration files..."
-        link_file "$CONFIG_DIR/.zshrc" "$HOME/.zshrc" "$BACKUP_DIR"
-        link_file "$CONFIG_DIR/.gitconfig" "$HOME/.gitconfig" "$BACKUP_DIR"
-        link_file "$CONFIG_DIR/.gitignore_global" "$HOME/.gitignore_global" "$BACKUP_DIR"
-        link_file "$CONFIG_DIR/starship.toml" "$HOME/.config/starship/starship.toml" "$BACKUP_DIR"
-        
-        # Goose configuration if it exists
-        if [ -f "$CONFIG_DIR/.config/goose/config.yaml" ]; then
-            link_file "$CONFIG_DIR/.config/goose/config.yaml" "$HOME/.config/goose/config.yaml" "$BACKUP_DIR"
-        fi
-    fi
+    # Link core dotfiles
+    link_file "$CONFIG_DIR/.zshrc" "$HOME/.zshrc" "$BACKUP_DIR"
+    link_file "$CONFIG_DIR/.gitconfig" "$HOME/.gitconfig" "$BACKUP_DIR"
+    link_file "$CONFIG_DIR/.gitignore_global" "$HOME/.gitignore_global" "$BACKUP_DIR"
+    link_file "$CONFIG_DIR/starship.toml" "$HOME/.config/starship/starship.toml" "$BACKUP_DIR"
     
-    # Create machine-specific configuration files
+    # Link profile-specific configurations
+    log "info" "Applying profile-specific configurations for: $PROFILE"
+    
+    # Set up machine-specific configuration files
     setup_local_config
 }
 
@@ -836,8 +813,8 @@ setup_local_config() {
         log "info" "Creating machine-specific zsh config from template..."
         cp "$CONFIG_DIR/.zshrc.local.template" "$zshrc_local_file" || log "warn" "Failed to create $zshrc_local_file"
         
-        # Update environment type based on installation flag
-        if [ "$WORK_ENV" = true ]; then
+        # Update environment type based on profile
+        if [ "$PROFILE" = "work" ]; then
             log "info" "Configuring for work environment"
             sed -i '' 's/# ENVIRONMENT_TYPE="personal"/# ENVIRONMENT_TYPE="personal"/' "$zshrc_local_file"
             sed -i '' 's/# ENVIRONMENT_TYPE="work"/ENVIRONMENT_TYPE="work"/' "$zshrc_local_file"
@@ -936,13 +913,8 @@ verify_installation() {
         issues=$((issues+1))
     fi
     
-    # Check profile system
-    if [ -f "$DOTFILES_DIR/bin/generate_config.py" ]; then
-        log "success" "Profile system is available"
-        log "info" "Current profile: $PROFILE"
-    else
-        log "warn" "Profile system is not available. Some features may be limited."
-    fi
+    # Check profile
+    log "info" "Current profile: $PROFILE"
     
     # Summary
     if [ $issues -eq 0 ]; then
@@ -955,15 +927,15 @@ verify_installation() {
 
 # Main installation flow
 main() {
-    log "info" "Starting dotfiles installation..."
+    log "info" "Starting dotfiles installation with profile: $PROFILE"
     
     # Show mode information
     if [ "$QUICK_MODE" = true ]; then
         log "info" "Running in quick mode - will skip all Homebrew operations and installations that are already complete"
     fi
     
-    if [ "$WORK_ENV" = true ]; then
-        log "info" "Configuring for work environment - will use work-specific AI settings"
+    if [ "$PROFILE" = "work" ]; then
+        log "info" "Configuring for work environment"
     else
         log "info" "Configuring for personal environment"
     fi
@@ -999,9 +971,9 @@ main() {
     verify_installation
     
     # Print summary
-    log "success" "Installation complete!"
+    log "success" "Installation complete! 🎉"
     log "info" "Configuration summary:"
-    log "info" "  • Environment: $([ "$WORK_ENV" = true ] && echo "Work" || echo "Personal")"
+    log "info" "  • Environment: $([ "$PROFILE" = "work" ] && echo "Work" || echo "Personal")"
     log "info" "  • Profile: $PROFILE"
     log "info" "  • Quick mode: $([ "$QUICK_MODE" = true ] && echo "Enabled (skipped Homebrew operations)" || echo "Disabled")"
     log "info" "  • App installation: $([ "$SKIP_APPS" = true ] && echo "Skipped" || echo "Performed")"

@@ -28,9 +28,6 @@ cd ~/Projects/dotfiles
 # Quick mode - skip all Homebrew operations and installations that are already complete
 ./install.sh --quick
 
-# Configure for work environment (different AI settings)
-./install.sh --work
-
 # Install with a specific profile
 ./install.sh --profile=<profile_name>
 
@@ -79,7 +76,7 @@ For detailed usage instructions and troubleshooting, see the [Installation Analy
 This dotfiles repository is designed as a complete system with several key components:
 
 - **Configuration Management**: Core configurations for your shell, tools, and applications
-- **Profile System**: Environment-specific configurations you can switch between
+- **Profile System**: Simple installation profiles for different environments (personal, work, server)
 - **AI Tools Integration**: Setup for AI coding assistants and workflows
 - **Installation Automation**: Scripts to set up your environment consistently
 - **Documentation**: README files in each directory explaining its purpose
@@ -92,11 +89,18 @@ This dotfiles repository is designed as a complete system with several key compo
 ├── CHANGELOG.md       # System modification history
 ├── bin/               # Core scripts and utilities
 ├── config/            # Configuration files for all tools
+│   └── templates/     # Profile-specific templates
+│       ├── personal/  # Personal profile templates
+│       ├── work/      # Work profile templates
+│       └── server/    # Server profile templates
 ├── contexts/          # Context files for AI tools and reference
 ├── examples/          # Example configuration templates
 ├── packages/          # Package management (Homebrew, npm, etc.)
+│   ├── Brewfile.personal # Personal profile Homebrew packages
+│   ├── Brewfile.work     # Work profile Homebrew packages
+│   └── Brewfile.server   # Server profile Homebrew packages
 ├── scripts/           # Installation and setup scripts
-└── tests/             # System integrity tests
+└── tests/             # Test scripts to verify functionality
 ```
 
 Each directory contains its own README with detailed information about its purpose and how to modify its contents.
@@ -122,7 +126,6 @@ Each directory contains its own README with detailed information about its purpo
 - Git security check for detecting sensitive information
 - API key leak detection in code changes
 - Environment placeholder verification
-- Automated security tests
 
 ### macOS Configuration
 - System preferences
@@ -229,34 +232,37 @@ Key local config files:
 
 ## 📋 Profile System
 
-The profile system allows you to easily switch between different configuration setups:
+The profile system allows you to easily install configurations for different environments:
 
 ```bash
-# List available profiles
-dotfiles-profile list
+# Install with the default personal profile
+./install.sh
 
-# Switch to a different profile
-dotfiles-profile set work
+# Install with the work profile
+./install.sh --profile=work
 
-# Show help
-dotfiles-profile help
+# Install with the server profile
+./install.sh --profile=server
 ```
 
-See the [Profile System documentation](config/profiles/README.md) for more details.
+Each profile has its own:
+1. Brewfile with appropriate packages
+2. Template files with environment-specific settings
+3. Custom configurations for AI tools
+
+Available profiles:
+- **personal**: Full-featured setup with entertainment apps
+- **work**: Professional setup without entertainment apps
+- **server**: Minimal CLI-only setup for servers
 
 ## 🔄 Maintaining Your System
 
 This repository includes tools for maintaining system integrity:
 
-- **System Tests**: Run `./tests/run_tests.sh` to verify your configuration
-- **Manual Testing Guide**: Follow `tests/MANUAL_TESTING.md` for comprehensive testing of AI tools
-- **Automated AI Tools Test**: Run `./tests/ai_tools_test.sh` to quickly verify AI tool functionality
 - **Changelog**: System modifications are tracked in `CHANGELOG.md`
 - **ADW for Maintenance**: Use AI workflows for system updates and maintenance
 - **Homebrew Manager**: Run `./bin/brew-manager.sh` to safely manage Homebrew taps and packages
 - **Installation Analyzer**: Run `./bin/install-analyzer.sh` to get AI-powered analysis of installation issues
-
-For details on system maintenance, see [contexts/ADW.md](contexts/ADW.md).
 
 ### Installation Analysis
 
@@ -286,22 +292,11 @@ The analyzer will:
 
 This is especially useful when setting up a new machine or updating to a new macOS version where compatibility issues might arise.
 
-#### Testing the Analyzer
-
-You can verify the analyzer's functionality without running a full installation:
-
-```bash
-# Run the test script to analyze a mock installation log
-./tests/test_install_analyzer.sh
-```
-
-This creates a realistic mock installation log with common issues and runs the analyzer on it, allowing you to see how it identifies and suggests fixes for problems.
-
 ## 📝 Extending Your System
 
 Each component can be extended and customized:
 
-1. **Profiles**: Add new profiles in `config/profiles/`
+1. **Profiles**: Add new Brewfiles and templates for custom profiles
 2. **Packages**: Modify package lists in `packages/`
 3. **Configuration**: Add tool configs in `config/`
 4. **AI Workflows**: Create new workflows in `config/adw/`

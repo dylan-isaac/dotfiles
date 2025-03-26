@@ -116,7 +116,7 @@ The basic usage of Goose involves running a command with a natural language inst
 goose "Create a simple React component that displays a counter"
 
 # Run with a specific model
-goose --model claude-3-opus-20240229 "Optimize this function for performance"
+goose --model claude-3.5-sonnet "Optimize this function for performance"
 ```
 
 #### Common Options
@@ -214,15 +214,6 @@ alias ai-context='run-repomix xml'
 - `--exclude=<pattern>` - Glob patterns to exclude
 - `--compress` - Use code compression to reduce token count
 - `--mcp` - Run as an MCP server (for integration with other tools)
-
-### MCP Server
-
-Repomix can run as an MCP server, which is configured in your dotfiles to start automatically at login. This allows other AI tools to analyze your code repositories on demand.
-
-The MCP server configuration is in:
-- `~/Library/LaunchAgents/com.repomix.mcp.plist`
-
-Your dotfiles configure both Claude Desktop and VS Code (via Cline extension) to access the Repomix MCP server.
 
 ## Using AI Tools Together
 

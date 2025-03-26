@@ -57,4 +57,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Git configuration
 - Homebrew package installation
 - Development tools setup
-- Terminal configuration 
+- Terminal configuration
+
+## [1.1.0] - The Foundation 🏗️
+
+### Added
+- Simplified profile system with flag-based approach
+- Profile-specific Brewfiles: Brewfile.personal, Brewfile.work, Brewfile.server
+- Profile-specific templates for different environments
+
+### Changed
+- Removed complex profile system with YAML configuration
+- Removed tests directory for a simpler codebase
+- Updated installation script to use profile flags
+- Updated README.md with new profile system documentation
+
+## 2024-03-01
+
+### Added
+- New PydanticAI-based implementation of AI Developer Workflows
+- AI-powered installation analyzer (bin/install-analyzer.sh)
+- Testing framework for verifying installer functionality
+- Automated documentation generation for components
+- Repomix integration for context packing
+
+### Changed
+- Enhanced template system for profile configuration
+- Improved Python environment with UV package manager
+- Better structure for Brewfiles to support modular profiles
+- Reorganized script documentation
+
+### Fixed
+- Improved symlink creation handling in bin/generate_config.py
+- Fixed shell integration for iTerm2
+- Better GPU detection for AI models
+- Enhanced error handling for network operations
+- Smarter defaults for .zshrc.local templates
+
+## 2024-02-15
+
+### Added
+- AI Developer Workflows (ADW) system
+- Aider and Goose integration
+- Profile system for environment management
+- Machine-specific configuration handling
+- Modern CLI tool replacements (eza, bat, ripgrep, etc.)
+
+### Changed
+- Reorganized directory structure for better organization
+- Enhanced documentation with usage examples
+- Modernized zsh configuration
+
+### Fixed
+- Numerous bugfixes for shell aliases
+- Corrected path handling in configuration scripts
+- Fixed environment variable conflicts 

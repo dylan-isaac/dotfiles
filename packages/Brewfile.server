@@ -1,0 +1,24 @@
+# CLI Tools
+brew "eza"               # Modern replacement for ls
+brew "bat"               # Modern replacement for cat
+brew "ripgrep"           # Modern replacement for grep
+brew "fzf"               # Fuzzy finder
+brew "zoxide"            # Modern replacement for cd
+brew "starship"          # Cross-shell prompt
+brew "git"               # Version control
+brew "gh"                # GitHub CLI
+brew "tmux"              # Terminal multiplexer
+brew "nvm"               # Node version manager
+brew "pyenv"             # Python version manager
+brew "uv"                # Python package manager
+
+# Server Tools
+brew "nginx"             # Web server
+brew "postgresql"        # Database
+brew "redis"             # Cache
+brew "htop"              # Process viewer
+brew "ncdu"              # Disk usage analyzer
+brew "jq"                # JSON processor
+brew "awk"               # Text processing
+brew "wget"              # File downloader
+brew "curl"              # URL transfer 

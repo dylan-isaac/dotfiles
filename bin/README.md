@@ -1,109 +1,79 @@
-# Scripts and Utilities
+# Bin Directory
 
-This directory contains executable scripts and utilities that enhance the dotfiles system with various functionality.
+This directory contains executable scripts and utilities for managing your dotfiles environment.
 
-## Core Scripts
+## Core Utilities
 
-| Script | Description |
-|--------|-------------|
-| `ai-workflow` | Classic Director pattern for running AI Developer Workflows |
-| `pai-workflow` | PydanticAI-based implementation for running structured AI workflows |
-| `generate_config.py` | Profile system generator that applies configurations based on profiles |
-| `director.py` | Implementation of the Director pattern for AI workflows |
-| `install-analyzer.sh` | AI-powered installation analyzer and diagnostics tool |
-| `brew-manager.sh` | Tool for managing Homebrew taps and packages |
+| File                    | Description                                                       |
+| ----------------------- | ----------------------------------------------------------------- |
+| `ai-workflow`           | Run AI-assisted workflows for code editing and project management |
+| `pai-workflow`          | PydanticAI implementation of AI-assisted workflows                |
+| `install-analyzer.sh`   | AI-powered installation diagnostics and repair suggestions        |
+| `dotfiles-analyzer`     | Convenient wrapper for install-analyzer.sh                        |
+| `generate-docs.sh`      | Generate documentation for components using AI                    |
+| `run-repomix.sh`        | Pack your codebase for use with LLMs                              |
+| `git-security-check.sh` | Check git commits for sensitive information                       |
 
 ## AI Tools
 
-| Script | Description |
-|--------|-------------|
-| `run_adw.py` | Backend script for AI Developer Workflows |
-| `adw-create.py` | Creates new ADW workflows from templates |
-| `goose-github-stars.js` | Goose extension for analyzing GitHub repository stars |
-| `run-repomix.sh` | Helper script for using Repomix with different options |
+| File                    | Description                                                        |
+| ----------------------- | ------------------------------------------------------------------ |
+| `director.py`           | AI workflow orchestration system for multi-step AI automated tasks |
+| `goose-github-stars.js` | Goose extension for GitHub stars analysis                          |
+| `run_adw.py`            | Run AI Developer Workflow system (legacy)                          |
+| `adw-create.py`         | Create new AI Developer Workflows                                  |
 
-## Maintenance Tools
+## Usage Examples
 
-| Script | Description |
-|--------|-------------|
-| `generate-docs.sh` | Generates documentation for various components |
-| `git-security-check.sh` | Checks for sensitive information in git repositories |
-| `install-analyzer.sh` | AI-powered installation diagnostics and troubleshooting |
-
-## Installation Analyzer
-
-The Installation Analyzer is an AI-powered diagnostic tool that analyzes the output of the dotfiles installation process and provides remediation plans for any issues.
-
-### Basic Usage
-
-The simplest way to use the installation analyzer is to run it with default options:
+### AI Workflows
 
 ```bash
-./bin/install-analyzer.sh
+# Run a workflow with default settings
+ai-workflow update-readme
+
+# Run a workflow with a custom prompt
+ai-workflow "Add input validation to user.py"
+
+# Use the PydanticAI implementation
+pai-workflow refactor --prompt="Improve error handling in auth.py"
 ```
 
-This will:
-1. Run the installation script with default settings
-2. Capture all output to a log file
-3. Use PydanticAI (default) to analyze the installation results
-4. Display a detailed analysis with any issues found
-5. Provide a remediation plan if issues are detected
-
-### Options and Customization
-
-You can customize the analyzer behavior with these options:
+### Installation Analysis
 
 ```bash
-# Choose which AI engine to use
-./bin/install-analyzer.sh --ai=goose     # Use Goose for analysis (requires Goose)
-./bin/install-analyzer.sh --ai=pydantic  # Use PydanticAI (default option)
+# Analyze an installation with default settings
+./install-analyzer.sh
 
-# See installation output in real-time
-./bin/install-analyzer.sh --verbose
+# Analyze with verbose output
+./install-analyzer.sh --verbose
 
-# Pass arguments to the installation script
-./bin/install-analyzer.sh --profile=work --skip-apps
-./bin/install-analyzer.sh --quick --verbose
+# Use a specific AI engine
+./install-analyzer.sh --ai=goose
 ```
 
-### Understanding Results
-
-The analyzer produces several important files:
-
-1. **Installation Log**: Raw output from the installation process  
-   Location: `/tmp/dotfiles-install-YYYYMMDD-HHMMSS/install.log`
-
-2. **Analysis**: Structured analysis of installation issues  
-   Location: `/tmp/dotfiles-install-YYYYMMDD-HHMMSS/analysis.md`
-
-The analysis includes:
-- Overall installation status (success, partial success, or failure)
-- List of detected issues with severity levels
-- Specific components that had problems
-- Step-by-step remediation plan
-- Verification steps to confirm fixes worked
-
-### Testing the Analyzer
-
-You can run a test of the analyzer without performing a real installation:
+### Documentation Generation
 
 ```bash
-./tests/test_install_analyzer.sh
+# Generate docs for a component
+./generate-docs.sh bin
+
+# Generate docs and copy to clipboard
+./generate-docs.sh --clipboard config
+
+# Use a custom template
+./generate-docs.sh --template=my-template.md lib
 ```
 
-This creates a mock installation log with common issues and runs the analyzer on it to verify functionality.
+## Customization
 
-### Troubleshooting
+You can modify or extend these scripts to fit your workflow. For example:
 
-If the analyzer doesn't work as expected:
+1. Add new AI workflows to `config/adw/workflows/`
+2. Create new Goose extensions in this directory
+3. Update the documentation templates in `contexts/templates/`
 
-1. Make sure the AI engine you chose is installed and working
-   - For Goose: Run `goose --version` to verify
-   - For PydanticAI: Check that `./bin/pai-workflow --list` works
+## Security Notes
 
-2. Check permissions: The script must be executable
-   ```bash
-   chmod +x ./bin/install-analyzer.sh
-   ```
-
-3. When using Goose, ensure Node.js is installed for the file reader extension
+1. The `git-security-check.sh` script is run automatically on commits if configured
+2. Never store API keys directly in these scripts
+3. Use the `.env` file or `.zshrc.local` for sensitive configuration

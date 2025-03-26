@@ -456,48 +456,6 @@ else
     export DOTFILES_PROFILE="personal"
 fi
 
-# Change profile function
-function dotfiles-profile() {
-    case "$1" in
-        list)
-            "$DOTFILES_DIR/bin/generate_config.py" --list
-            ;;
-        show)
-            echo "Current profile: $DOTFILES_PROFILE"
-            ;;
-        help)
-            echo "Usage: dotfiles-profile [command]"
-            echo "Commands:"
-            echo "  list           - List available profiles"
-            echo "  show           - Show current profile"
-            echo "  set [profile]  - Switch to a different profile"
-            echo "  apply          - Reapply current profile configuration"
-            echo "  help           - Show this help message"
-            ;;
-        set)
-            if [ -z "$2" ]; then
-                echo "Error: No profile specified"
-                echo "Usage: dotfiles-profile set [profile]"
-                return 1
-            fi
-            "$DOTFILES_DIR/bin/generate_config.py" --profile "$2" --apply
-            # Need to restart shell for changes to take effect
-            echo "Profile set to $2"
-            echo "Please restart your terminal or run 'source ~/.zshrc' for changes to take effect"
-            ;;
-        apply)
-            "$DOTFILES_DIR/bin/generate_config.py" --profile "$DOTFILES_PROFILE" --apply
-            echo "Configuration reapplied for profile: $DOTFILES_PROFILE"
-            echo "Please restart your terminal or run 'source ~/.zshrc' for changes to take effect"
-            ;;
-        *)
-            echo "Unknown command: $1"
-            echo "Run 'dotfiles-profile help' for usage information"
-            return 1
-            ;;
-    esac
-}
-
 # iTerm2 Integration
 [ -f "${HOME}/.iterm2_shell_integration.zsh" ] && source "${HOME}/.iterm2_shell_integration.zsh"
 
