@@ -494,3 +494,25 @@ Available scaffold types:
 - **mcp**: Creates a new MCP tool project with FastMCP server setup
 
 The scaffolding system is extensible - see [`scripts/scaffold-scripts/`](scripts/scaffold-scripts/) for implementation details.
+
+## 📂 Quick Directory Access
+
+The dotfiles include a convenient command `o` to quickly open key directories in Finder. This command supports tab completion for ease of use.
+
+### Usage
+
+```bash
+# Open the Projects directory
+$ o projects
+
+# Open the Downloads directory
+$ o downloads
+
+# Open the Desktop directory
+$ o desktop
+
+# Open the Documents directory
+$ o documents
+```
+
+This feature allows you to quickly navigate to frequently used directories directly from the terminal, enhancing your workflow efficiency. 🎉

@@ -529,3 +529,37 @@ alias ai-workflow="python $DOTFILES_DIR/bin/adw-create.py"
 # 11. Custom Configuration
 # -----------------------------
 # Add your custom configurations below this line
+
+# Function to open key directories in Finder
+function o() {
+    case "$1" in
+        projects)
+            open ~/Projects
+            ;;
+        downloads)
+            open ~/Downloads
+            ;;
+        desktop)
+            open ~/Desktop
+            ;;
+        documents)
+            open ~/Documents
+            ;;
+        *)
+            echo "Unknown directory: $1"
+            echo "Available options: projects, downloads, desktop, documents"
+            ;;
+    esac
+}
+
+# Add the function to the PATH
+alias o='o'
+
+# Autocomplete for the 'o' command
+_o_complete() {
+    local -a options
+    options=(projects downloads desktop documents)
+    compadd "$@" -- $options
+}
+
+compdef _o_complete o
