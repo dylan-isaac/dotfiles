@@ -147,6 +147,38 @@ The dotfiles include setup for these AI coding assistants:
 3. **[Repomix](https://repomix.com/)** - Pack your codebase into a single file for LLMs
 4. **[Firecrawl](https://github.com/mendableai/firecrawl-mcp-server)** - MCP server for web scraping and data extraction
 5. **AI Developer Workflows (ADW)** - Automated coding workflows using the Director pattern
+6. **Context Clip** - Utility for accessing context files from the command line
+
+#### Context Clip
+
+The `context-clip` utility provides easy access to context files from the command line:
+
+```bash
+# Copy a context file to clipboard
+context-clip ADW
+
+# List available context files
+context-clip --list
+
+# Print context to stdout or pipe to other tools
+context-clip -p system-prompt
+context-clip ADW | grep Director
+
+# Send context directly to AI tools
+context-clip -g architecture  # Open in Goose
+context-clip -a prompt        # Open in Aider
+
+# Use context in AI workflows
+context-clip -w refactor ADW  # Use ADW context in refactor workflow
+
+# Save context to a file
+context-clip -s output.md ADW
+
+# Tab completion is available
+context-clip [TAB]  # Press Tab to see available contexts
+```
+
+This makes it easy to reuse your context files in various AI-assisted coding workflows. The command features tab completion for context names, making it even faster to access your frequently used contexts.
 
 #### Goose Profile Configuration
 

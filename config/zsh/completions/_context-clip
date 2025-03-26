@@ -1,0 +1,70 @@
+#compdef context-clip
+
+# Zsh completion script for context-clip
+
+_context_files() {
+    local DOTFILES_DIR="$HOME/Projects/dotfiles"
+    local CONTEXTS_DIR="$DOTFILES_DIR/contexts"
+    
+    # Check if contexts directory exists
+    if [[ ! -d "$CONTEXTS_DIR" ]]; then
+        return 0
+    fi
+    
+    # Find all .md and .txt files in contexts directory
+    local context_files=($(find "$CONTEXTS_DIR" -type f \( -name "*.md" -o -name "*.txt" \) | sort))
+    
+    # Process the files to get just the basenames without extensions
+    local contexts=()
+    for file in "${context_files[@]}"; do
+        local basename=$(basename "$file")
+        local name_without_ext=${basename%.*}
+        
+        # Skip README.md
+        if [[ "$basename" != "README.md" ]]; then
+            contexts+=("$name_without_ext:${basename}")
+        fi
+    done
+    
+    # Use Zsh's _describe to output the completion list
+    _describe 'context files' contexts
+}
+
+_context_clip_options() {
+    local -a options
+    options=(
+        '-l:List available context files:->list'
+        '--list:List available context files:->list'
+        '-c:Copy content to clipboard:->clipboard'
+        '--clipboard:Copy content to clipboard:->clipboard'
+        '-p:Print content to stdout:->print'
+        '--print:Print content to stdout:->print'
+        '-g:Open content in Goose:->goose'
+        '--goose:Open content in Goose:->goose'
+        '-a:Open content in Aider:->aider'
+        '--aider:Open content in Aider:->aider'
+        '-w:Use content in an AI workflow:->workflow'
+        '--workflow:Use content in an AI workflow:->workflow'
+        '-s:Save content to a file:->save'
+        '--save:Save content to a file:->save'
+        '-h:Show help message:->help'
+        '--help:Show help message:->help'
+    )
+    _describe 'options' options
+}
+
+local -a state
+
+_arguments \
+    '(-l --list)'{-l,--list}'[List available context files]' \
+    '(-c --clipboard)'{-c,--clipboard}'[Copy content to clipboard]' \
+    '(-p --print)'{-p,--print}'[Print content to stdout]' \
+    '(-g --goose)'{-g,--goose}'[Open content in Goose]' \
+    '(-a --aider)'{-a,--aider}'[Open content in Aider]' \
+    '(-w --workflow)'{-w,--workflow}'[Use content in an AI workflow]:workflow name:' \
+    '(-s --save)'{-s,--save}'[Save content to a file]:output file:_files' \
+    '(-h --help)'{-h,--help}'[Show help message]' \
+    '*:context file:_context_files'
+
+# Return success
+return 0 

@@ -13,6 +13,7 @@ This directory contains executable scripts and utilities for managing your dotfi
 | `generate-docs.sh`      | Generate documentation for components using AI                    |
 | `run-repomix.sh`        | Pack your codebase for use with LLMs                              |
 | `git-security-check.sh` | Check git commits for sensitive information                       |
+| `context-clip`          | Access context files from contexts folder for AI tools            |
 
 ## AI Tools
 
@@ -64,6 +65,31 @@ pai-workflow refactor --prompt="Improve error handling in auth.py"
 ./generate-docs.sh --template=my-template.md lib
 ```
 
+### Context Files
+
+```bash
+# Copy a context file to clipboard
+context-clip ADW
+
+# Print context to stdout
+context-clip -p system-prompt
+
+# List available context files
+context-clip --list
+
+# Send context to Goose
+context-clip -g architecture
+
+# Send context to an AI workflow
+context-clip -w refactor ADW
+
+# Save context to a file
+context-clip -s output.md ADW
+
+# Tab completion is available
+context-clip [TAB]  # Press Tab to see available contexts
+```
+
 ## Customization
 
 You can modify or extend these scripts to fit your workflow. For example:
@@ -71,6 +97,7 @@ You can modify or extend these scripts to fit your workflow. For example:
 1. Add new AI workflows to `config/adw/workflows/`
 2. Create new Goose extensions in this directory
 3. Update the documentation templates in `contexts/templates/`
+4. Add new context files to the `contexts/` directory
 
 ## Security Notes
 

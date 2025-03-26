@@ -376,6 +376,41 @@ setup_shell() {
         log "info" "Installing zsh-syntax-highlighting plugin..."
         git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting || log "warn" "Failed to install zsh-syntax-highlighting"
     fi
+    
+    # Set up Zsh completions
+    log "info" "Setting up Zsh completions..."
+    
+    # Create completions directory in home if it doesn't exist
+    mkdir -p "$HOME/.zsh_completions" 2>/dev/null || true
+    
+    # Link our completion scripts
+    if [ -d "$CONFIG_DIR/zsh/completions" ]; then
+        for completion_file in "$CONFIG_DIR/zsh/completions/_"*; do
+            if [ -f "$completion_file" ]; then
+                local completion_name=$(basename "$completion_file")
+                link_file "$completion_file" "$HOME/.zsh_completions/$completion_name" "$BACKUP_DIR"
+                log "info" "Linked completion: $completion_name"
+            fi
+        done
+    else
+        log "warn" "Zsh completions directory not found: $CONFIG_DIR/zsh/completions"
+    fi
+    
+    # Add completions directory to fpath in .zshrc.local if not already there
+    local zshrc_local="$LOCAL_CONFIG_DIR/.zshrc.local"
+    if [ -f "$zshrc_local" ]; then
+        if ! grep -q "fpath=(~/.zsh_completions \$fpath)" "$zshrc_local"; then
+            log "info" "Adding completions directory to fpath in .zshrc.local"
+            echo "" >> "$zshrc_local"
+            echo "# Load custom completions" >> "$zshrc_local"
+            echo "fpath=(~/.zsh_completions \$fpath)" >> "$zshrc_local"
+            echo "autoload -Uz compinit && compinit" >> "$zshrc_local"
+        else
+            log "info" "Completions directory already in fpath"
+        fi
+    else
+        log "warn" "Could not add completions to .zshrc.local: file not found"
+    fi
 }
 
 # Set up AI development tools

@@ -1,0 +1,249 @@
+#!/bin/zsh
+
+# context-clip - Utility to grab content from contexts folder and pipe to clipboard/processes
+# Part of dotfiles system
+#
+# Tab completion is available - press Tab after typing "context-clip" to see available contexts 
+# or use "context-clip --list" to see all available contexts
+
+set -e
+
+DOTFILES_DIR="$HOME/Projects/dotfiles"
+CONTEXTS_DIR="$DOTFILES_DIR/contexts"
+
+# Text formatting
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Log function with colors
+log() {
+    local level="$1"
+    local message="$2"
+    
+    case "$level" in
+        "info") echo -e "${BLUE}[INFO]${NC} $message" ;;
+        "success") echo -e "${GREEN}[SUCCESS]${NC} $message" ;;
+        "warn") echo -e "${YELLOW}[WARNING]${NC} $message" ;;
+        "error") echo -e "${RED}[ERROR]${NC} $message" ;;
+    esac
+}
+
+# Functions to validate and get context file
+validate_contexts_dir() {
+    if [ ! -d "$CONTEXTS_DIR" ]; then
+        log "error" "Contexts directory not found at: $CONTEXTS_DIR"
+        exit 1
+    fi
+}
+
+find_context_file() {
+    local context_name="$1"
+    local full_path=""
+    
+    # First try exact path
+    if [ -f "$CONTEXTS_DIR/$context_name" ]; then
+        full_path="$CONTEXTS_DIR/$context_name"
+    # Then try with .md extension
+    elif [ -f "$CONTEXTS_DIR/$context_name.md" ]; then
+        full_path="$CONTEXTS_DIR/$context_name.md"
+    # Then try with .txt extension
+    elif [ -f "$CONTEXTS_DIR/$context_name.txt" ]; then
+        full_path="$CONTEXTS_DIR/$context_name.txt"
+    # Try case-insensitive search
+    else
+        # Find first matching file case-insensitive
+        local found_file=$(find "$CONTEXTS_DIR" -type f -iname "$context_name*" | head -n 1)
+        if [ -n "$found_file" ]; then
+            full_path="$found_file"
+        fi
+    fi
+    
+    echo "$full_path"
+}
+
+copy_to_clipboard() {
+    local content="$1"
+    
+    if command -v pbcopy &>/dev/null; then
+        # macOS
+        echo "$content" | pbcopy
+        log "success" "Content copied to clipboard"
+    elif command -v xclip &>/dev/null; then
+        # Linux with xclip
+        echo "$content" | xclip -selection clipboard
+        log "success" "Content copied to clipboard"
+    elif command -v clip.exe &>/dev/null; then
+        # Windows WSL
+        echo "$content" | clip.exe
+        log "success" "Content copied to clipboard"
+    else
+        log "error" "No clipboard command found (pbcopy, xclip, or clip.exe)"
+        return 1
+    fi
+}
+
+# Function to show usage information
+show_usage() {
+    echo "Usage: context-clip [OPTIONS] CONTEXT_NAME"
+    echo ""
+    echo "Retrieve content from the contexts folder and pipe it to various destinations."
+    echo ""
+    echo "Options:"
+    echo "  -l, --list               List available context files"
+    echo "  -c, --clipboard          Copy content to clipboard (default)"
+    echo "  -p, --print              Print content to stdout"
+    echo "  -g, --goose              Open content in Goose"
+    echo "  -a, --aider              Open content in Aider"
+    echo "  -w, --workflow NAME      Use content in an AI workflow"
+    echo "  -s, --save FILE          Save content to a file"
+    echo "  -h, --help               Show this help message"
+    echo ""
+    echo "Examples:"
+    echo "  context-clip ADW                   # Copy ADW.md content to clipboard"
+    echo "  context-clip -p system-prompt      # Print system-prompt.md to stdout"
+    echo "  context-clip -g architecture       # Open architecture.md in Goose"
+    echo "  context-clip ADW | grep Director   # Pipe ADW content to grep"
+    echo "  context-clip -w refactor ADW       # Use ADW content in refactor workflow"
+    echo ""
+    echo "Available contexts:"
+    find "$CONTEXTS_DIR" -type f -name "*.md" -o -name "*.txt" | sort | sed "s|$CONTEXTS_DIR/||" | sed 's/\.[^.]*$//' | sed 's/^/  /'
+}
+
+list_contexts() {
+    log "info" "Available context files:"
+    find "$CONTEXTS_DIR" -type f -name "*.md" -o -name "*.txt" | sort | sed "s|$CONTEXTS_DIR/||" | sed 's/^/  /'
+}
+
+# Main script logic
+main() {
+    validate_contexts_dir
+    
+    local mode="clipboard" # Default mode
+    local context_name=""
+    local workflow_name=""
+    local save_file=""
+    
+    # Parse arguments
+    while [[ "$#" -gt 0 ]]; do
+        case $1 in
+            -l|--list)
+                list_contexts
+                exit 0
+                ;;
+            -c|--clipboard)
+                mode="clipboard"
+                ;;
+            -p|--print)
+                mode="print"
+                ;;
+            -g|--goose)
+                mode="goose"
+                ;;
+            -a|--aider)
+                mode="aider"
+                ;;
+            -w|--workflow)
+                mode="workflow"
+                if [[ -n "$2" && "$2" != -* ]]; then
+                    workflow_name="$2"
+                    shift
+                else
+                    log "error" "No workflow name specified for --workflow option"
+                    exit 1
+                fi
+                ;;
+            -s|--save)
+                mode="save"
+                if [[ -n "$2" && "$2" != -* ]]; then
+                    save_file="$2"
+                    shift
+                else
+                    log "error" "No file name specified for --save option"
+                    exit 1
+                fi
+                ;;
+            -h|--help)
+                show_usage
+                exit 0
+                ;;
+            -*)
+                log "error" "Unknown option: $1"
+                show_usage
+                exit 1
+                ;;
+            *)
+                context_name="$1"
+                ;;
+        esac
+        shift
+    done
+    
+    # Check for required context_name
+    if [ -z "$context_name" ] && [ "$mode" != "list" ]; then
+        log "error" "No context name specified"
+        show_usage
+        exit 1
+    fi
+    
+    # Find context file
+    local context_file=$(find_context_file "$context_name")
+    if [ -z "$context_file" ]; then
+        log "error" "Context file not found: $context_name"
+        list_contexts
+        exit 1
+    fi
+    
+    # Get content
+    local content=$(cat "$context_file")
+    
+    # Process based on mode
+    case "$mode" in
+        "clipboard")
+            copy_to_clipboard "$content"
+            ;;
+        "print")
+            echo "$content"
+            ;;
+        "goose")
+            if command -v goose &>/dev/null; then
+                log "info" "Opening in Goose: $context_name"
+                echo "$content" | goose
+            else
+                log "error" "Goose command not found"
+                exit 1
+            fi
+            ;;
+        "aider")
+            if command -v aider &>/dev/null; then
+                log "info" "Opening in Aider: $context_name"
+                echo "$content" | aider
+            else
+                log "error" "Aider command not found"
+                exit 1
+            fi
+            ;;
+        "workflow")
+            if command -v ai-workflow &>/dev/null; then
+                log "info" "Running workflow '$workflow_name' with context: $context_name"
+                ai-workflow "$workflow_name" --context "$content"
+            elif command -v pai-workflow &>/dev/null; then
+                log "info" "Running workflow '$workflow_name' with context: $context_name"
+                pai-workflow "$workflow_name" --context "$content"
+            else
+                log "error" "Workflow commands not found: ai-workflow or pai-workflow"
+                exit 1
+            fi
+            ;;
+        "save")
+            log "info" "Saving to file: $save_file"
+            echo "$content" > "$save_file"
+            log "success" "Content saved to $save_file"
+            ;;
+    esac
+}
+
+# Run the main function
+main "$@" 
