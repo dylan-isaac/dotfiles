@@ -1,0 +1,13 @@
+# Example AI Developer Workflow configuration
+prompt: "prompts/feature_prompt.md"
+coder_model: "claude-3-sonnet-20240229"
+evaluator_model: "gpt-4o"
+max_iterations: 3
+execution_command: "pytest -xvs tests/"
+context_editable:
+  - "src/feature.py"
+  - "tests/test_feature.py"
+context_read_only:
+  - "src/utils.py"
+  - "docs/api.md"
+evaluator: "default" 

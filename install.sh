@@ -19,6 +19,7 @@ done
 SKIP_APPS=false
 QUICK_MODE=false
 WORK_ENV=false
+PROFILE="personal"  # Default profile
 
 # Text formatting
 RED='\033[0;31m'
@@ -33,13 +34,25 @@ while [[ "$#" -gt 0 ]]; do
         --skip-apps) SKIP_APPS=true ;;
         --quick) QUICK_MODE=true ;;
         --work) WORK_ENV=true ;;
+        --profile=*) PROFILE="${1#*=}" ;;
+        --profile) 
+            if [[ -n "$2" && "$2" != --* ]]; then
+                PROFILE="$2"
+                shift
+            else
+                log "error" "No profile specified for --profile option"
+                exit 1
+            fi
+            ;;
         --help) 
             echo "Usage: ./install.sh [options]"
             echo "Options:"
-            echo "  --skip-apps       Skip installation of applications"
-            echo "  --quick           Skip installations that are already complete"
-            echo "  --work            Configure for work environment (different AI settings)"
-            echo "  --help            Show this help message"
+            echo "  --skip-apps            Skip installation of applications"
+            echo "  --quick                Skip installations that are already complete"
+            echo "  --work                 Configure for work environment (different AI settings)"
+            echo "  --profile=<name>       Use specific profile for configuration"
+            echo "  --profile <name>       Use specific profile for configuration"
+            echo "  --help                 Show this help message"
             exit 0
             ;;
         *) echo -e "${RED}Unknown parameter: $1${NC}"; exit 1 ;;
@@ -720,14 +733,41 @@ link_configuration_files() {
     
     # Create necessary directories
     mkdir -p "$HOME/.config/starship"
+    mkdir -p "$HOME/.config/goose"
+    mkdir -p "$HOME/.config/dotfiles"
     mkdir -p "$LOCAL_CONFIG_DIR"
 
-    # Link configuration files
-    link_file "$CONFIG_DIR/.zshrc" "$HOME/.zshrc" "$BACKUP_DIR"
-    link_file "$CONFIG_DIR/.gitconfig" "$HOME/.gitconfig" "$BACKUP_DIR"
-    link_file "$CONFIG_DIR/.gitignore_global" "$HOME/.gitignore_global" "$BACKUP_DIR"
-    link_file "$CONFIG_DIR/starship.toml" "$HOME/.config/starship/starship.toml" "$BACKUP_DIR"
-    link_file "$CONFIG_DIR/.config/goose/config.yaml" "$HOME/.config/goose/config.yaml" "$BACKUP_DIR"
+    # Generate configs from profile if profile system is set up
+    if [ -f "$DOTFILES_DIR/bin/generate_config.py" ]; then
+        log "info" "Using profile system to generate configurations..."
+        
+        # Run generate_config.py to generate configs from the specified profile
+        python "$DOTFILES_DIR/bin/generate_config.py" --profile "$PROFILE" --apply || log "warn" "Failed to generate configs from profile"
+        
+        # Set the current profile
+        echo "$PROFILE" > "$DOTFILES_DIR/.current_profile"
+        
+        # Set WORK_ENV based on profile if not explicitly set
+        if [ "$WORK_ENV" = false ] && [ -f "$DOTFILES_DIR/config/profiles/$PROFILE.yaml" ]; then
+            PROFILE_TYPE=$(grep "environment_type" "$DOTFILES_DIR/config/profiles/$PROFILE.yaml" | awk '{print $2}' | tr -d '"')
+            if [ "$PROFILE_TYPE" = "work" ]; then
+                log "info" "Setting work environment based on profile type"
+                WORK_ENV=true
+            fi
+        fi
+    else
+        # Link configuration files in the traditional way
+        log "info" "Using traditional method to link configuration files..."
+        link_file "$CONFIG_DIR/.zshrc" "$HOME/.zshrc" "$BACKUP_DIR"
+        link_file "$CONFIG_DIR/.gitconfig" "$HOME/.gitconfig" "$BACKUP_DIR"
+        link_file "$CONFIG_DIR/.gitignore_global" "$HOME/.gitignore_global" "$BACKUP_DIR"
+        link_file "$CONFIG_DIR/starship.toml" "$HOME/.config/starship/starship.toml" "$BACKUP_DIR"
+        
+        # Goose configuration if it exists
+        if [ -f "$CONFIG_DIR/.config/goose/config.yaml" ]; then
+            link_file "$CONFIG_DIR/.config/goose/config.yaml" "$HOME/.config/goose/config.yaml" "$BACKUP_DIR"
+        fi
+    fi
     
     # Create machine-specific configuration files
     setup_local_config
@@ -837,6 +877,14 @@ verify_installation() {
         issues=$((issues+1))
     fi
     
+    # Check profile system
+    if [ -f "$DOTFILES_DIR/bin/generate_config.py" ]; then
+        log "success" "Profile system is available"
+        log "info" "Current profile: $PROFILE"
+    else
+        log "warn" "Profile system is not available. Some features may be limited."
+    fi
+    
     # Summary
     if [ $issues -eq 0 ]; then
         log "success" "All core components verified successfully!"
@@ -895,6 +943,7 @@ main() {
     log "success" "Installation complete!"
     log "info" "Configuration summary:"
     log "info" "  • Environment: $([ "$WORK_ENV" = true ] && echo "Work" || echo "Personal")"
+    log "info" "  • Profile: $PROFILE"
     log "info" "  • Quick mode: $([ "$QUICK_MODE" = true ] && echo "Enabled" || echo "Disabled")"
     log "info" "  • App installation: $([ "$SKIP_APPS" = true ] && echo "Skipped" || echo "Performed")"
     log "info" "  • Backup directory: $BACKUP_DIR"

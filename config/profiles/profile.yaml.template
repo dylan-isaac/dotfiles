@@ -1,0 +1,116 @@
+# Profile Configuration Template
+# Copy this file to create a new profile (e.g., personal.yaml, work.yaml)
+
+name: "profile_name"
+description: "Profile description"
+
+# Environment Type
+environment_type: "personal"  # personal, work, or server
+
+# Packages and Applications
+packages:
+  category:
+    essential: true  # Whether to install essential packages in this category
+    additional: []   # Additional packages to install beyond the defaults
+
+  # Categories with specific packages
+  cli_tools:
+    essential: true
+    additional: []
+    
+  development_tools:
+    essential: true
+    additional: []
+    
+  productivity:
+    essential: true
+    additional: []
+    
+  browsers:
+    essential: true
+    additional: []
+    
+  communication:
+    essential: true
+    additional: []
+    
+  media:
+    essential: true
+    additional: []
+    
+  utilities:
+    essential: true
+    additional: []
+    
+  creative:
+    essential: false
+    additional: []
+    
+  gaming:
+    essential: false
+    additional: []
+
+# AI Tool Configurations
+ai_tools:
+  # Goose Configuration
+  goose:
+    enabled: true
+    default_provider: "anthropic"  # anthropic, openai, etc.
+    default_model: "claude-3-5-sonnet-latest"
+    extensions:
+      - name: "developer"
+        enabled: true
+      - name: "computercontroller"
+        enabled: true
+      - name: "memory"
+        enabled: true
+      - name: "time"
+        enabled: true
+      - name: "repomix"
+        enabled: true
+      - name: "mcp-server-git"
+        enabled: true
+      - name: "mcp-server-fetch"
+        enabled: true
+      - name: "mcp-server-puppeteer"
+        enabled: true
+      - name: "tutorial"
+        enabled: false
+      - name: "mcp-installer"
+        enabled: false
+        
+  # Aider Configuration
+  aider:
+    enabled: true
+    default_model: "claude-3-sonnet-20240229"  # Default model to use
+    models:
+      - alias: "fast"
+        model: "gpt-4o-mini"
+      - alias: "smart"
+        model: "gpt-4o"
+      - alias: "opus"
+        model: "claude-3-opus-20240229"
+      - alias: "sonnet"
+        model: "claude-3-sonnet-20240229"
+    settings:
+      editor: "cursor --wait"
+      
+  # ADW (AI Developer Workflow) Configuration
+  adw:
+    enabled: true
+    default_workflow: "basic"
+    workflows:
+      - name: "basic"
+        coder_model: "claude-3-sonnet-20240229"
+        evaluator_model: "gpt-4o"
+        max_iterations: 3
+        
+# Custom shell settings
+shell:
+  aliases:
+    - name: "ai-code"
+      command: "aider --model claude-3-sonnet-20240229"
+    - name: "ai-explain"
+      command: "aider --model gpt-4o-mini --no-git path/to/file"
+    - name: "ai-context"
+      command: "repomix --style xml --compress --remove-empty-lines | pbcopy" 

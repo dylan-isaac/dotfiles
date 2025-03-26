@@ -11,6 +11,9 @@ git clone https://github.com/dylansheffer/dotfiles.git ~/Projects/dotfiles
 # Run the installation script
 cd ~/Projects/dotfiles
 ./install.sh
+
+# Or install with a specific profile
+./install.sh --profile=work
 ```
 
 ### Installation Options
@@ -25,8 +28,11 @@ cd ~/Projects/dotfiles
 # Configure for work environment (different AI settings)
 ./install.sh --work
 
+# Install with a specific profile
+./install.sh --profile=<profile_name>
+
 # Combine options
-./install.sh --quick --skip-apps --work
+./install.sh --quick --skip-apps --profile=minimal
 ```
 
 ## 📦 What's Included
@@ -42,11 +48,17 @@ cd ~/Projects/dotfiles
 
 ```
 .
+├── bin/              # Scripts and utilities
+│   ├── director.py   # AI Developer Workflow director
+│   └── generate_config.py # Configuration generator
 ├── config/          # Configuration files
 │   ├── .gitconfig   # Git configuration
 │   ├── .zshrc       # Zsh configuration
-│   ├── local/       # Machine-specific configurations (not in git)
-│   └── ai/          # AI tool configuration templates
+│   ├── profiles/    # Profile definitions
+│   ├── goose/       # Goose configuration templates
+│   ├── aider/       # Aider configuration templates
+│   ├── adw/         # AI Developer Workflow configurations
+│   └── local/       # Machine-specific configurations (not in git)
 ├── scripts/         # Installation and setup scripts
 └── examples/        # Example configuration files for sensitive data
 ```
@@ -82,18 +94,30 @@ The dotfiles include setup for these AI coding assistants:
 1. **[Aider](https://aider.chat/)** - A terminal-based AI pair programming tool
 2. **[Goose](https://block.github.io/goose/)** - Block's AI agent for software development
 3. **[Repomix](https://repomix.com/)** - Pack your codebase into a single file for LLMs
+4. **AI Developer Workflows (ADW)** - Automated coding workflows using the Director pattern
 
-#### Configuration
+### AI Developer Workflows
 
-- AI tools are installed automatically by the setup script
-- Default aliases (`ai-code`, `ai-explain`, `ai-context`) are configured in the main `.zshrc`
-- Machine-specific configs (like API keys) are stored in `config/local/.zshrc.local`
-- Configuration files are stored in your dotfiles and symlinked to your home directory:
-  - `config/local/ai/aider.conf.yml` → `~/.aider.conf.yml`
-  - `config/local/ai/.env` → `~/.env`
-  - `config/local/.zshrc.local` → `~/.zshrc.local` 
-  - `config/ai/repomix.config.json` → `~/.config/repomix/repomix.config.json`
-- Work vs. personal configurations are supported via the `--work` flag
+The Director pattern (described in [`contexts/ADW.md`](contexts/ADW.md)) allows you to create autonomous AI coding workflows:
+
+1. Profile-specific workflows are defined in `config/adw/`
+2. Run a workflow using:
+   ```bash
+   ai-workflow [workflow_name]
+   ```
+3. List available workflows:
+   ```bash
+   ai-workflow --list
+   ```
+
+### Configuration
+
+- All AI tool configurations are managed through the profile system
+- Each profile can specify:
+  - Which extensions to enable in Goose
+  - Default models to use in Aider
+  - AI Developer Workflow settings
+  - Custom shell aliases
 
 #### Getting Started with AI Tools
 
@@ -151,23 +175,6 @@ The dotfiles include setup for these AI coding assistants:
      ```
    - **Logs**: Server logs are available at `~/.repomix/logs/`
 
-#### Work vs. Personal Configuration
-
-The installation script supports different configurations for work and personal environments:
-
-```bash
-# Install with work settings
-./install.sh --work
-
-# Edit your config/local/.zshrc.local to set environment
-ENVIRONMENT_TYPE="work"  # or "personal"
-```
-
-This affects:
-- Which AI models are configured as defaults
-- Git commit attribution for AI tools
-- Available model aliases
-
 ## 🔐 Sensitive Configuration
 
 All machine-specific configuration is stored in the `config/local/` directory, which is excluded from git by `.gitignore`.
@@ -187,6 +194,66 @@ Key local config files:
 - `config/local/ai/aider.conf.yml` - Aider configuration  
 - `config/local/ai/.env` - Aider environment variables
 
+## 📋 Profile System
+
+The dotfiles repository now includes a comprehensive profile system that allows you to easily switch between different configuration setups for various environments.
+
+### Available Profiles
+
+- **personal** - Full-featured development environment with all tools and games
+- **work** - Work-focused setup without games and entertainment apps
+- **server** - Minimal CLI-only setup for servers
+
+### Managing Profiles
+
+Once installed, you can manage profiles using the `dotfiles-profile` command:
+
+```bash
+# List available profiles
+dotfiles-profile list
+
+# Show current profile
+dotfiles-profile show
+
+# Switch to a different profile
+dotfiles-profile set work
+
+# Re-apply current profile settings
+dotfiles-profile apply
+
+# Show help
+dotfiles-profile help
+```
+
+### Creating Custom Profiles
+
+You can create your own profiles by copying and modifying existing profile templates:
+
+1. Create a new profile file:
+   ```bash
+   cp config/profiles/personal.yaml config/profiles/custom.yaml
+   ```
+
+2. Edit the new profile file to adjust settings:
+   ```bash
+   vim config/profiles/custom.yaml
+   ```
+
+3. Apply your new profile:
+   ```bash
+   dotfiles-profile set custom
+   ```
+
+### What Profiles Configure
+
+Each profile can configure:
+
+- **Environment Type** - personal, work, or server
+- **Package Selection** - Which applications to install via Homebrew
+- **AI Tool Settings** - Configurations for Goose, Aider, and AI Developer Workflows
+- **Shell Aliases** - Custom aliases for the current profile
+- **Default Models** - Which AI models to use by default
+
 ## 📝 Manual Steps
 
 Some things still need to be done manually:
@@ -204,6 +271,9 @@ To update your dotfiles:
 cd ~/Projects/dotfiles
 git pull
 ./install.sh
+
+# Or update with specific profile
+./install.sh --profile=<profile_name>
 ```
 
 ## 📜 License

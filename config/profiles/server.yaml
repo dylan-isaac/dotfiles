@@ -1,0 +1,71 @@
+name: "server"
+description: "Minimal server environment with essential CLI tools only"
+
+# Environment Type
+environment_type: "server"
+
+# Packages and Applications
+packages:
+  cli_tools:
+    essential: true
+    additional: ["tmux", "htop", "neofetch", "ncdu"]
+    
+  development_tools:
+    essential: true
+    additional: ["docker-compose"]
+    
+  productivity:
+    essential: false
+    additional: []
+    
+  browsers:
+    essential: false
+    additional: []
+    
+  communication:
+    essential: false
+    additional: []
+    
+  media:
+    essential: false
+    additional: []
+    
+  utilities:
+    essential: false
+    additional: []
+    
+  creative:
+    essential: false
+    additional: []
+    
+  gaming:
+    essential: false
+    additional: []
+
+# AI Tool Configurations
+ai_tools:
+  # Goose Configuration
+  goose:
+    enabled: false
+    
+  # Aider Configuration
+  aider:
+    enabled: true
+    default_model: "gpt-4o"
+    models:
+      - alias: "fast"
+        model: "gpt-3.5-turbo"
+      - alias: "smart"
+        model: "gpt-4o"
+    settings:
+      editor: "vim"
+      
+  # ADW Configuration
+  adw:
+    enabled: false
+        
+# Custom shell settings
+shell:
+  aliases:
+    - name: "ai-code"
+      command: "aider --model gpt-4o" 

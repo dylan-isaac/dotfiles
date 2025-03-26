@@ -1,0 +1,30 @@
+# Feature Implementation
+
+## Objective
+Implement a new feature for calculating metrics on time series data.
+
+## Implementation Details
+1. Create a `calculate_metrics` function in `src/feature.py`
+2. Implement tests in `tests/test_feature.py`
+3. The function should support the following metrics:
+   - Mean
+   - Median
+   - Standard deviation
+   - Rolling average with customizable window size
+
+## Technical Requirements
+- Properly handle edge cases (empty arrays, NaN values)
+- Include type hints
+- Document the function with clear docstrings
+- Ensure tests cover all metrics and edge cases
+- Follow existing code style in the project
+
+## Example Usage
+```python
+from feature import calculate_metrics
+
+data = [1, 2, 3, 4, 5]
+metrics = calculate_metrics(data, metrics=["mean", "median", "std"], window_size=3)
+print(metrics)
+# Output: {"mean": 3.0, "median": 3.0, "std": 1.58, "rolling_mean": [2.0, 3.0, 4.0]}
+``` 
