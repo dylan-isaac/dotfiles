@@ -790,10 +790,18 @@ link_configuration_files() {
     link_file "$CONFIG_DIR/.gitconfig" "$HOME/.gitconfig" "$BACKUP_DIR"
     link_file "$CONFIG_DIR/.gitignore_global" "$HOME/.gitignore_global" "$BACKUP_DIR"
     link_file "$CONFIG_DIR/starship.toml" "$HOME/.config/starship/starship.toml" "$BACKUP_DIR"
-    link_file "$CONFIG_DIR/goose/config.yaml" "$HOME/.config/goose/config.yaml" "$BACKUP_DIR"
     
     # Link profile-specific configurations
     log "info" "Applying profile-specific configurations for: $PROFILE"
+    
+    # Check for profile-specific Goose configuration
+    if [ -f "$CONFIG_DIR/templates/$PROFILE/goose/config.yaml" ]; then
+        log "info" "Using profile-specific Goose configuration for $PROFILE"
+        link_file "$CONFIG_DIR/templates/$PROFILE/goose/config.yaml" "$HOME/.config/goose/config.yaml" "$BACKUP_DIR"
+    else
+        # Use default Goose configuration
+        link_file "$CONFIG_DIR/goose/config.yaml" "$HOME/.config/goose/config.yaml" "$BACKUP_DIR"
+    fi
     
     # Set up machine-specific configuration files
     setup_local_config

@@ -273,6 +273,8 @@ Each profile has its own:
 2. Template files with environment-specific settings
 3. Custom configurations for AI tools
 
+For example, the work profile configures Goose to use OpenAI instead of Anthropic, which is useful in work environments where Anthropic access may not be available.
+
 Available profiles:
 - **personal**: Full-featured setup with entertainment apps
 - **work**: Professional setup without entertainment apps
@@ -411,5 +413,4 @@ create-node-project my-project 18.19.0
 # Use npx with the project's Node version (automatic)
 cd my-project
 npx some-package
-```
 ```
