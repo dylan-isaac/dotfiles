@@ -795,11 +795,15 @@ link_configuration_files() {
     log "info" "Applying profile-specific configurations for: $PROFILE"
     
     # Check for profile-specific Goose configuration
-    if [ -f "$CONFIG_DIR/templates/$PROFILE/goose/config.yaml" ]; then
+    local goose_template_path="$CONFIG_DIR/templates/$PROFILE/goose/config.yaml"
+    log "info" "Checking for profile-specific Goose config at: $goose_template_path"
+    
+    if [ -f "$goose_template_path" ]; then
         log "info" "Using profile-specific Goose configuration for $PROFILE"
-        link_file "$CONFIG_DIR/templates/$PROFILE/goose/config.yaml" "$HOME/.config/goose/config.yaml" "$BACKUP_DIR"
+        link_file "$goose_template_path" "$HOME/.config/goose/config.yaml" "$BACKUP_DIR"
     else
         # Use default Goose configuration
+        log "info" "Profile-specific Goose config not found, using default"
         link_file "$CONFIG_DIR/goose/config.yaml" "$HOME/.config/goose/config.yaml" "$BACKUP_DIR"
     fi
     

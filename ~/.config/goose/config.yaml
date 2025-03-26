@@ -1,0 +1,95 @@
+# Work profile configuration for Goose CLI
+# Using OpenAI provider instead of Anthropic since this profile is for work environments
+# where Anthropic access may not be available or paid for.
+GOOSE_MODE: smart_approve
+GOOSE_MODEL: gpt-4o
+GOOSE_PROVIDER: openai
+extensions:
+  computercontroller:
+    enabled: true
+    name: computercontroller
+    timeout: 300
+    type: builtin
+  developer:
+    enabled: true
+    name: developer
+    timeout: 300
+    type: builtin
+  firecrawl-mcp:
+    args:
+    - -y
+    - firecrawl-mcp
+    cmd: npx
+    enabled: true
+    envs:
+      FIRECRAWL_API_KEY: '${FIRECRAWL_API_KEY}'
+    name: firecrawl-mcp
+    timeout: 300
+    type: stdio
+  mcp-installer:
+    args:
+    - -y
+    - '@anaisbetts/mcp-installer'
+    cmd: npx
+    enabled: false
+    envs: {}
+    name: mcp-installer
+    timeout: 300
+    type: stdio
+  mcp-server-fetch:
+    args:
+    - mcp-server-fetch
+    cmd: uvx
+    enabled: true
+    envs: {}
+    name: mcp-server-fetch
+    timeout: 300
+    type: stdio
+  mcp-server-git:
+    args:
+    - mcp-server-git
+    cmd: uvx
+    enabled: true
+    envs: {}
+    name: mcp-server-git
+    timeout: 300
+    type: stdio
+  mcp-server-puppeteer:
+    args:
+    - -y
+    - '@modelcontextprotocol/server-puppeteer'
+    cmd: npx
+    enabled: true
+    envs: {}
+    name: mcp-server-puppeteer
+    timeout: 300
+    type: stdio
+  memory:
+    enabled: true
+    name: memory
+    timeout: 300
+    type: builtin
+  repomix:
+    args:
+    - --mcp
+    cmd: repomix
+    enabled: true
+    envs: {}
+    name: repomix
+    timeout: 300
+    type: stdio
+  time:
+    args:
+    - -y
+    - '@dandeliongold/mcp-time'
+    cmd: npx
+    enabled: true
+    envs: {}
+    name: time
+    timeout: 300
+    type: stdio
+  tutorial:
+    enabled: false
+    name: tutorial
+    timeout: 300
+    type: builtin 
