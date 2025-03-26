@@ -612,14 +612,16 @@ EOF
         rm "$temp_plist"
         
         # Check if LaunchAgent is already loaded
-        if launchctl list | grep -q "com.repomix.mcp"; then
+        if launchctl list 2>/dev/null | grep -q "com.repomix.mcp"; then
             log "info" "Unloading existing Repomix MCP LaunchAgent..."
-            launchctl unload "$launch_agents_dir/com.repomix.mcp.plist" &>/dev/null || true
+            { launchctl unload "$launch_agents_dir/com.repomix.mcp.plist" 2>/dev/null || true; } &>/dev/null
+            # Small delay to ensure proper unloading before reloading
+            sleep 1
         fi
         
         # Load the LaunchAgent
         log "info" "Loading Repomix MCP LaunchAgent..."
-        launchctl load "$launch_agents_dir/com.repomix.mcp.plist" &>/dev/null || log "warn" "Failed to load Repomix MCP LaunchAgent"
+        { launchctl load "$launch_agents_dir/com.repomix.mcp.plist" 2>/dev/null || log "warn" "Failed to load Repomix MCP LaunchAgent"; } 2>/dev/null
         
         log "success" "Repomix MCP server will now start automatically at login"
         log "info" "To manually control the service:"

@@ -116,8 +116,17 @@ if [ -s "/opt/homebrew/opt/nvm/nvm.sh" ]; then
     function create-node-project() {
         local project_name="${1:?Project name is required}"
         local node_version="${2:-lts/*}"
+        local project_type="${3:-basic}"  # basic, react, express, typescript
         
         # Create project directory
+        if [ -d "$project_name" ]; then
+            read -p "Directory $project_name already exists. Overwrite? (y/n): " overwrite
+            if [[ ! $overwrite =~ ^[Yy]$ ]]; then
+                echo "Operation cancelled."
+                return 1
+            fi
+        fi
+        
         mkdir -p "$project_name"
         cd "$project_name" || return
         
@@ -129,10 +138,127 @@ if [ -s "/opt/homebrew/opt/nvm/nvm.sh" ]; then
         # Initialize package.json
         npm init -y
         
-        echo "Node project '$project_name' created with Node version $(node -v)"
+        # Set up project based on type
+        case "$project_type" in
+            react)
+                echo "Setting up React project..."
+                npx create-react-app .
+                ;;
+            express)
+                echo "Setting up Express project..."
+                npm install express
+                mkdir -p src
+                
+                # Create a basic Express app.js
+                cat > src/app.js << EOF
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+  res.send('Hello World!');
+});
+
+app.listen(port, () => {
+  console.log(\`Server listening at http://localhost:\${port}\`);
+});
+EOF
+                
+                # Update package.json
+                jq '.scripts.start = "node src/app.js"' package.json > temp.json && mv temp.json package.json
+                ;;
+            typescript)
+                echo "Setting up TypeScript project..."
+                npm install typescript @types/node --save-dev
+                npx tsc --init
+                
+                mkdir -p src
+                
+                # Create a basic TypeScript index.ts
+                cat > src/index.ts << EOF
+function greet(name: string): string {
+  return \`Hello, \${name}!\`;
+}
+
+console.log(greet('World'));
+EOF
+                
+                # Update package.json
+                jq '.scripts.build = "tsc" | .scripts.start = "node dist/index.js"' package.json > temp.json && mv temp.json package.json
+                ;;
+            *)
+                # Basic project - create a minimal structure
+                echo "Setting up basic Node.js project..."
+                mkdir -p src
+                
+                # Create a simple index.js
+                cat > src/index.js << EOF
+console.log('Hello, world!');
+EOF
+                
+                # Update package.json
+                jq '.scripts.start = "node src/index.js"' package.json > temp.json && mv temp.json package.json
+                ;;
+        esac
+        
+        # Create .gitignore
+        cat > .gitignore << EOF
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build directories
+dist/
+build/
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+EOF
+        
+        # Create README.md
+        cat > README.md << EOF
+# ${project_name}
+
+## Description
+A Node.js project.
+
+## Installation
+\`\`\`bash
+npm install
+\`\`\`
+
+## Usage
+\`\`\`bash
+npm start
+\`\`\`
+EOF
+        
+        echo "Node project '${project_name}' created with Node version $(node -v)"
+        echo "Project type: ${project_type}"
+        echo ""
         echo "To get started:"
-        echo "  cd $project_name"
-        echo "  npm install your-dependencies"
+        echo "  cd ${project_name}"
+        echo "  npm install"
+        echo "  npm start"
     }
     
     # Load NVM functions without initializing NVM (for faster startup)
@@ -202,6 +328,16 @@ function create-venv() {
     # Check if venv already exists
     if [ -d "$venv_path" ]; then
         echo "Virtual environment already exists at $venv_path"
+        read -p "Do you want to recreate it? (y/n): " recreate
+        if [[ $recreate =~ ^[Yy]$ ]]; then
+            echo "Removing existing environment..."
+            rm -rf "$venv_path"
+            echo "Creating virtual environment at $venv_path..."
+            uv venv "$venv_path"
+            echo "Virtual environment created at $venv_path"
+        else
+            echo "Using existing virtual environment."
+        fi
     else
         echo "Creating virtual environment at $venv_path..."
         uv venv "$venv_path"
@@ -213,7 +349,14 @@ function create-venv() {
         # Check if we're already in a virtual environment
         if [ -n "$VIRTUAL_ENV" ]; then
             echo "Already in virtual environment: $VIRTUAL_ENV"
-            echo "Deactivate first with 'deactivate' if you want to switch"
+            if [ "$VIRTUAL_ENV" != "$(pwd)/$venv_path" ]; then
+                read -p "Switch to new environment? (y/n): " switch
+                if [[ $switch =~ ^[Yy]$ ]]; then
+                    deactivate
+                    source "$venv_path/bin/activate"
+                    echo "Switched to new virtual environment"
+                fi
+            fi
         else
             echo "Activating virtual environment..."
             source "$venv_path/bin/activate"

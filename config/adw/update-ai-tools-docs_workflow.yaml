@@ -1,0 +1,18 @@
+prompt: |
+  Update the documentation for the AI tools (Aider, Goose, Repomix) in the README.md file.
+  Ensure the documentation covers the following aspects:
+  
+  - Brief description of each tool
+  - Installation instructions
+  - Usage examples
+  - Any relevant configuration details
+  - Full CLI usage flags and examples
+  
+  After updating the documentation, run the tests/verify-ai-tools-docs.sh script to validate the changes.
+
+coder_model: "gpt-4o"
+evaluator_model: "gpt-4o"
+execution_command: "./tests/verify-ai-tools-docs.sh"
+context_editable:
+  - "README.md"
+log_file: "logs/update-ai-tools-docs.log"

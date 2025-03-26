@@ -122,7 +122,7 @@ The system includes Goose extensions for browser automation:
 
 ```bash
 # Run the GitHub stars analyzer
-goose --load-extension=bin/goose-github-stars.js "Analyze stars on GitHub repo octocat/Spoon-Knife"
+goose extension:bin/goose-github-stars.js "Analyze stars on GitHub repo octocat/Spoon-Knife"
 
 # Add an extension to your Goose config for automatic loading
 vim ~/.config/goose/config.yaml
@@ -256,7 +256,17 @@ The dotfiles configure Node.js with enhanced tools for better development:
 
 - **Version Management**: Auto-switching when changing directories with `.nvmrc` files
 - **Smart npx**: Uses the project's Node version based on `.nvmrc` or `package.json`
-- **Project Initialization**: Quick setup with `create-node-project [name] [version]`
+- **Project Initialization**: Quick setup with various templates:
+  ```bash
+  # Create a new basic Node.js project with LTS Node
+  create-node-project my-project
+  
+  # Create a project with a specific Node version
+  create-node-project my-project 18.19.0
+  
+  # Create a project with a specific template (basic, react, express, typescript)
+  create-node-project my-project lts/* typescript
+  ```
 
 #### Usage Examples
 

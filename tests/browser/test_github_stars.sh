@@ -95,6 +95,6 @@ rm -f "$RESULTS_DIR/goose_test_command.json"
 echo ""
 echo -e "${GREEN}✅ Extension structure and syntax validation complete!${NC}"
 echo "To use this extension, run:"
-echo -e "${YELLOW}goose --load-extension=$EXTENSION_PATH \"Analyze stars on GitHub repo owner/repo\"${NC}"
+echo -e "${YELLOW}goose extension:$EXTENSION_PATH \"Analyze stars on GitHub repo owner/repo\"${NC}"
 echo "or add it to your Goose configuration for automatic loading."
 exit 0 
