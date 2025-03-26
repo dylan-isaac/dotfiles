@@ -49,7 +49,7 @@ while [[ "$#" -gt 0 ]]; do
             echo "Usage: ./install.sh [options]"
             echo "Options:"
             echo "  --skip-apps            Skip installation of applications"
-            echo "  --quick                Skip installations that are already complete"
+            echo "  --quick                Skip all Homebrew operations and installations that are already complete"
             echo "  --work                 Configure for work environment (different AI settings)"
             echo "  --profile=<name>       Use specific profile for configuration"
             echo "  --profile <name>       Use specific profile for configuration"
@@ -120,11 +120,24 @@ check_system_requirements() {
 setup_homebrew() {
     log "info" "Setting up Homebrew..."
     
+    # Skip homebrew setup in quick mode
+    if [ "$QUICK_MODE" = true ]; then
+        log "info" "Quick mode enabled - skipping Homebrew setup"
+        # Just ensure Homebrew is in PATH if it exists
+        if command -v brew &>/dev/null; then
+            log "success" "Homebrew is already installed and will be used for essential operations only"
+            eval "$(/opt/homebrew/bin/brew shellenv)" 2>/dev/null || eval "$(/usr/local/bin/brew shellenv)" 2>/dev/null || true
+        else
+            log "warn" "Homebrew is not installed. Some features may not work in quick mode."
+        fi
+        return 0
+    fi
+    
     # Install Homebrew if not installed
     if ! command -v brew &>/dev/null; then
         log "info" "Installing Homebrew..."
         /bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || critical_error "Failed to install Homebrew"
-        eval "$(/opt/homebrew/bin/brew shellenv)"
+        eval "$(/opt/homebrew/bin/brew shellenv)" 2>/dev/null || eval "$(/usr/local/bin/brew shellenv)" 2>/dev/null || true
     else
         log "success" "Homebrew is already installed"
     fi
@@ -179,6 +192,23 @@ setup_homebrew() {
 install_core_tools() {
     log "info" "Installing core development tools..."
     
+    # Skip Homebrew installations in quick mode
+    if [ "$QUICK_MODE" = true ]; then
+        log "info" "Quick mode enabled - skipping Homebrew installations of core tools"
+        
+        # Only check if tools are available
+        for cmd in git python3 pyenv; do
+            if command -v $cmd &>/dev/null; then
+                log "success" "$cmd is already installed"
+            else
+                log "warn" "$cmd is not installed. Some functionality may be limited in quick mode."
+            fi
+        done
+        
+        log "info" "Core tools check complete"
+        return 0
+    fi
+    
     # Install Git (required for remaining steps)
     if ! command -v git &>/dev/null; then
         log "info" "Installing Git..."
@@ -226,6 +256,12 @@ setup_uv() {
         return 0
     fi
     
+    # Skip UV installation in quick mode if not already installed
+    if [ "$QUICK_MODE" = true ]; then
+        log "info" "Quick mode enabled - skipping UV installation"
+        return 0
+    fi
+    
     # Ensure Python is available before attempting UV installation
     if ! command -v python3 &>/dev/null; then
         log "error" "Python is required for UV installation but was not found"
@@ -244,6 +280,12 @@ setup_uv() {
         return 0
     else
         log "warn" "Failed to install UV via pip, trying backup installation methods"
+        
+        # Skip Homebrew fallback in quick mode
+        if [ "$QUICK_MODE" = true ]; then
+            log "info" "Quick mode enabled - skipping Homebrew fallback for UV"
+            return 1
+        fi
         
         # Try brew as fallback
         log "info" "Trying Homebrew installation method for UV..."
@@ -265,19 +307,18 @@ setup_uv() {
 
 # Install additional applications via Homebrew
 install_applications() {
+    # Skip in quick mode
+    if [ "$QUICK_MODE" = true ]; then
+        log "info" "Quick mode enabled - skipping all application installations"
+        return 0
+    fi
+    
     if [ "$SKIP_APPS" = true ]; then
         log "info" "Skipping application installation (--skip-apps flag provided)"
         return 0
     fi
     
     log "info" "Checking application installations..."
-    
-    # Quick mode skips Brewfile installation if core tools are already installed
-    if $QUICK_MODE && check_core_tools; then
-        log "success" "All core tools are already installed. Skipping Brewfile installation."
-        SKIP_APPS=true
-        return 0
-    fi
     
     # Proceed with installation
     log "info" "Installing applications..."
@@ -334,48 +375,61 @@ setup_ai_tools() {
     log "info" "Setting up AI development tools..."
     
     # Check if gcc/gfortran is installed for Aider (needed for scipy)
-    if ! command -v gfortran &>/dev/null; then
+    if ! command -v gfortran &>/dev/null && [ "$QUICK_MODE" = false ]; then
         log "info" "Installing gcc (includes gfortran) for Aider dependencies..."
         brew install gcc || log "warn" "Failed to install gcc. Aider installation might fail."
     fi
     
     # Check if AI tools should be skipped in quick mode
     if [ "$QUICK_MODE" = true ]; then
-        # Check if both tools are available
-        local aider_installed=false
-        local goose_installed=false
-        local repomix_installed=false
+        # Only check if tools are available, don't try to install them
+        log "info" "Quick mode enabled - checking for AI tools but not installing"
+        
+        local aider_available=false
+        local goose_available=false
+        local repomix_available=false
         
         if command -v aider &>/dev/null; then
             log "success" "Aider is already installed: $(aider --version 2>/dev/null || echo 'unknown version')"
-            aider_installed=true
+            aider_available=true
+        else
+            log "warn" "Aider is not installed. Using AI coding assistant features will be limited in quick mode."
         fi
         
         if command -v goose &>/dev/null || [ -f "$HOME/.goose/bin/goose" ]; then
             log "success" "Goose is already installed"
-            goose_installed=true
+            goose_available=true
             
             # Ensure Goose is in PATH for this session
             if [ -d "$HOME/.goose/bin" ]; then
                 export PATH="$HOME/.goose/bin:$PATH"
             fi
+        else
+            log "warn" "Goose is not installed. Using AI coding assistant features will be limited in quick mode."
         fi
         
         # Check if Repomix is globally installed
-        if npm list -g repomix &>/dev/null; then
-            log "success" "Repomix is already installed"
-            repomix_installed=true
+        if npm list -g repomix &>/dev/null || command -v npx &>/dev/null; then
+            if npm list -g repomix &>/dev/null; then
+                log "success" "Repomix is already installed globally"
+            else
+                log "info" "Repomix can be used via npx"
+            fi
+            repomix_available=true
+        else
+            log "warn" "Repomix is not installed and npx is not available. Using AI coding assistant features will be limited in quick mode."
         fi
         
-        # If all tools are installed, skip the rest
-        if $aider_installed && $goose_installed && $repomix_installed; then
-            log "success" "All AI tools are already installed. Skipping installation."
-            # Still set up configurations
-            setup_ai_configurations
-            return 0
+        # Set up configurations even in quick mode
+        setup_ai_configurations
+        
+        if $aider_available && $goose_available && $repomix_available; then
+            log "success" "All AI tools are available in quick mode"
         else
-            log "info" "Some AI tools are missing. Will proceed with installation."
+            log "warn" "Some AI tools are not available. Limited functionality in quick mode."
         fi
+        
+        return 0
     fi
     
     # Install Aider using the official install script
@@ -891,7 +945,7 @@ main() {
     
     # Show mode information
     if [ "$QUICK_MODE" = true ]; then
-        log "info" "Running in quick mode - will skip installations that are already complete"
+        log "info" "Running in quick mode - will skip all Homebrew operations and installations that are already complete"
     fi
     
     if [ "$WORK_ENV" = true ]; then
@@ -935,7 +989,7 @@ main() {
     log "info" "Configuration summary:"
     log "info" "  • Environment: $([ "$WORK_ENV" = true ] && echo "Work" || echo "Personal")"
     log "info" "  • Profile: $PROFILE"
-    log "info" "  • Quick mode: $([ "$QUICK_MODE" = true ] && echo "Enabled" || echo "Disabled")"
+    log "info" "  • Quick mode: $([ "$QUICK_MODE" = true ] && echo "Enabled (skipped Homebrew operations)" || echo "Disabled")"
     log "info" "  • App installation: $([ "$SKIP_APPS" = true ] && echo "Skipped" || echo "Performed")"
     log "info" "  • Backup directory: $BACKUP_DIR"
     

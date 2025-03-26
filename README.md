@@ -25,7 +25,7 @@ cd ~/Projects/dotfiles
 # Skip installing applications
 ./install.sh --skip-apps
 
-# Quick mode - skip installations that are already complete
+# Quick mode - skip all Homebrew operations and installations that are already complete
 ./install.sh --quick
 
 # Configure for work environment (different AI settings)
@@ -154,6 +154,12 @@ ai-workflow workflow-name
 
 # List available workflows
 ai-workflow --list
+
+# Run with custom prompt
+ai-workflow "Your custom task description" 
+
+# Include files for context
+ai-workflow "Update error handling" --files bin/director.py
 ```
 
 #### 2. PydanticAI-based Implementation

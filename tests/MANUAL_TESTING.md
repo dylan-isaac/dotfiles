@@ -23,9 +23,9 @@ ai-workflow --list
    - **Failure Case**: Error message appears or no log file is created
 
 2. **Custom Prompt Workflow**
-   - **Command**: `ai-workflow basic --prompt="Fix the bug in this function"`
-   - **Success Case**: Custom prompt is used in the workflow
-   - **Failure Case**: Default prompt is used instead
+   - **Command**: `ai-workflow "Fix the bug in this function"`
+   - **Success Case**: Custom prompt is used to create and run a new workflow
+   - **Failure Case**: Error in workflow creation or execution
 
 3. **File Context Workflow**
    - **Command**: `ai-workflow "Update error handling" --files bin/director.py`
