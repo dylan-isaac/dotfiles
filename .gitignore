@@ -21,3 +21,4 @@ config/local/
 .aider.tags*
 
 logs/*
+.goose/*
