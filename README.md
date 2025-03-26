@@ -148,6 +148,36 @@ The dotfiles include setup for these AI coding assistants:
 4. **[Firecrawl](https://github.com/mendableai/firecrawl-mcp-server)** - MCP server for web scraping and data extraction
 5. **AI Developer Workflows (ADW)** - Automated coding workflows using the Director pattern
 
+#### Goose Profile Configuration
+
+Goose configurations are profile-specific, allowing different setups for personal and work environments:
+
+```bash
+# Personal profile uses Anthropic models by default
+./install.sh --profile=personal
+
+# Work profile typically uses OpenAI models
+./install.sh --profile=work
+```
+
+The configuration files are located at:
+- Default: `config/goose/config.yaml`
+- Profile-specific: `config/templates/<profile>/goose/config.yaml`
+
+The system prefers gpt-4o over older models like gpt-4-turbo. You can check and update the current configuration:
+
+```bash
+# View current Goose config
+cat ~/.config/goose/config.yaml
+
+# Create a profile-specific config (if it doesn't exist)
+mkdir -p ~/Projects/dotfiles/config/templates/personal/goose
+cp ~/Projects/dotfiles/config/goose/config.yaml ~/Projects/dotfiles/config/templates/personal/goose/
+# Then edit to use gpt-4o or your preferred model
+```
+
+> **Troubleshooting**: If Goose is not using your configured model, check `~/.zshrc.local` for environment variables like `GOOSE_MODEL` or `GOOSE_PROVIDER` that override your configuration. The install script will detect and offer to remove these variables automatically, but you can also remove them manually.
+
 ### AI Developer Workflows
 
 The system supports two ADW implementations:

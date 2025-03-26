@@ -1,4 +1,5 @@
 GOOSE_MODE: smart_approve
+# Personal profile - Uses Anthropic Claude models by default
 GOOSE_MODEL: claude-3-5-sonnet-latest
 GOOSE_PROVIDER: anthropic
 extensions:
@@ -89,4 +90,4 @@ extensions:
     enabled: false
     name: tutorial
     timeout: 300
-    type: builtin 
+    type: builtin

@@ -803,7 +803,11 @@ link_configuration_files() {
         link_file "$goose_template_path" "$HOME/.config/goose/config.yaml" "$BACKUP_DIR"
     else
         # Use default Goose configuration
-        log "info" "Profile-specific Goose config not found, using default"
+        log "info" "Profile-specific Goose config not found at $goose_template_path"
+        log "info" "Using default configuration instead. To create profile-specific configs:"
+        log "info" "  1. Create directory: mkdir -p $CONFIG_DIR/templates/$PROFILE/goose"
+        log "info" "  2. Copy default: cp $CONFIG_DIR/goose/config.yaml $CONFIG_DIR/templates/$PROFILE/goose/"
+        log "info" "  3. Edit the config to use your preferred model (e.g., gpt-4o)"
         link_file "$CONFIG_DIR/goose/config.yaml" "$HOME/.config/goose/config.yaml" "$BACKUP_DIR"
     fi
     
@@ -868,6 +872,52 @@ setup_local_config() {
 configure_macos() {
     log "info" "Configuring macOS defaults..."
     source "$DOTFILES_DIR/scripts/macos.sh" || log "warn" "Failed to configure some macOS settings"
+}
+
+# Check for conflicting environment variables
+check_conflicting_env_vars() {
+    log "info" "Checking for conflicting environment variables..."
+    
+    local zshrc_local="$HOME/.zshrc.local"
+    if [ -f "$zshrc_local" ]; then
+        # Check for Goose environment variables that would override config files
+        if grep -q "export GOOSE_MODEL=" "$zshrc_local" || grep -q "export GOOSE_PROVIDER=" "$zshrc_local"; then
+            log "warn" "Found Goose environment variables in $zshrc_local that will override profile configurations"
+            log "warn" "Consider removing these lines to allow profile-specific configurations to work:"
+            
+            grep "export GOOSE_MODEL=" "$zshrc_local" 2>/dev/null || true
+            grep "export GOOSE_PROVIDER=" "$zshrc_local" 2>/dev/null || true
+            
+            log "info" "Goose settings are better managed through the profile system:"
+            log "info" "  ~/Projects/dotfiles/config/templates/<profile>/goose/config.yaml"
+            
+            # Ask if user wants to automatically remove these lines
+            printf "Would you like to automatically remove these variables from .zshrc.local? (y/n) "
+            read answer
+            if [[ "$answer" =~ ^[Yy]$ ]]; then
+                # Create backup
+                cp "$zshrc_local" "$zshrc_local.bak"
+                log "info" "Created backup at $zshrc_local.bak"
+                
+                # Remove the lines
+                sed -i '' '/export GOOSE_MODEL=/d' "$zshrc_local"
+                sed -i '' '/export GOOSE_PROVIDER=/d' "$zshrc_local"
+                
+                # Add comment explaining the removal
+                echo "" >> "$zshrc_local"
+                echo "# Goose settings are now managed by the profile system through config files" >> "$zshrc_local"
+                echo "# To change settings, update the appropriate profile config in:" >> "$zshrc_local"
+                echo "# ~/Projects/dotfiles/config/templates/<profile>/goose/config.yaml" >> "$zshrc_local"
+                echo "# and run: ./install.sh --profile=<profile>" >> "$zshrc_local"
+                
+                log "success" "Removed conflicting Goose environment variables from $zshrc_local"
+            else
+                log "warn" "Keeping conflicting environment variables. Profile configurations may not work as expected."
+            fi
+        else
+            log "success" "No conflicting environment variables found"
+        fi
+    fi
 }
 
 # Verify installation
@@ -990,6 +1040,9 @@ main() {
     # Update PATH variables for verification
     export PATH="$HOME/.local/bin:$PATH"
     export PATH="$HOME/.goose/bin:$PATH"
+    
+    # Check for conflicting environment variables
+    check_conflicting_env_vars
     
     # Verify installation only if not in config-only mode
     if [ "$CONFIG_ONLY" = false ]; then

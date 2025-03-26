@@ -1,7 +1,5 @@
-# Work profile configuration for Goose CLI
-# Using OpenAI provider instead of Anthropic since this profile is for work environments
-# where Anthropic access may not be available or paid for.
 GOOSE_MODE: smart_approve
+# Work profile - Uses OpenAI's GPT-4o model
 GOOSE_MODEL: gpt-4o
 GOOSE_PROVIDER: openai
 extensions:
