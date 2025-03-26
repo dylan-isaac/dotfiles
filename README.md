@@ -350,6 +350,7 @@ This repository includes tools for maintaining system integrity:
 - **ADW for Maintenance**: Use AI workflows for system updates and maintenance
 - **Homebrew Manager**: Run `./bin/brew-manager.sh` to safely manage Homebrew taps and packages
 - **Installation Analyzer**: Run `./bin/install-analyzer.sh` to get AI-powered analysis of installation issues
+- **Context Documentation**: Always update `contexts/system.md` after modifying the system to keep documentation in sync
 
 ### Installation Analysis
 
