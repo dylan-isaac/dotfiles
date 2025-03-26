@@ -262,10 +262,10 @@ The system includes Goose extensions for browser automation:
 
 ```bash
 # Run the GitHub stars analyzer
-goose extension:bin/goose-github-stars.js "Analyze stars on GitHub repo octocat/Spoon-Knife"
+goose "Scrape and summarize the content from https://example.com"
 
 # Run web scraping with Firecrawl MCP
-goose "Scrape and summarize the content from https://example.com"
+goose "Research and summarize recent developments in AI safety"
 
 # Add an extension to your Goose config for automatic loading
 vim ~/.config/goose/config.yaml
@@ -280,9 +280,6 @@ The system includes integration with Firecrawl MCP for advanced web scraping:
 export FIRECRAWL_API_KEY="your_api_key_here"
 
 # Use Goose with Firecrawl for web research
-goose "Research and summarize recent developments in AI safety"
-
-# Extract structured data from websites
 goose "Extract product information from https://store.example.com"
 ```
 

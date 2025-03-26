@@ -120,7 +120,7 @@ goose --version
    - **Failure Case**: Errors in understanding or executing the task
 
 2. **Browser Automation**
-   - **Command**: `goose extension:bin/goose-github-stars.js "Analyze stars on GitHub repo octocat/Spoon-Knife"`
+   - **Command**: `goose "Analyze stars on GitHub repo octocat/Spoon-Knife"`
    - **Success Case**: Goose opens a browser, scrapes GitHub stars, and returns analysis
    - **Failure Case**: Browser automation fails or data extraction error
 
