@@ -787,6 +787,7 @@ link_configuration_files() {
     link_file "$CONFIG_DIR/.gitconfig" "$HOME/.gitconfig" "$BACKUP_DIR"
     link_file "$CONFIG_DIR/.gitignore_global" "$HOME/.gitignore_global" "$BACKUP_DIR"
     link_file "$CONFIG_DIR/starship.toml" "$HOME/.config/starship/starship.toml" "$BACKUP_DIR"
+    link_file "$CONFIG_DIR/goose/config.yaml" "$HOME/.config/goose/config.yaml" "$BACKUP_DIR"
     
     # Link profile-specific configurations
     log "info" "Applying profile-specific configurations for: $PROFILE"

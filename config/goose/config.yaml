@@ -12,6 +12,17 @@ extensions:
     name: developer
     timeout: 300
     type: builtin
+  firecrawl-mcp:
+    args:
+    - -y
+    - firecrawl-mcp
+    cmd: npx
+    enabled: true
+    envs:
+      FIRECRAWL_API_KEY: '${FIRECRAWL_API_KEY}'
+    name: firecrawl-mcp
+    timeout: 300
+    type: stdio
   mcp-installer:
     args:
     - -y

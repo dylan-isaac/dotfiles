@@ -141,7 +141,8 @@ The dotfiles include setup for these AI coding assistants:
 1. **[Aider](https://aider.chat/)** - A terminal-based AI pair programming tool
 2. **[Goose](https://block.github.io/goose/)** - Block's AI agent for software development
 3. **[Repomix](https://repomix.com/)** - Pack your codebase into a single file for LLMs
-4. **AI Developer Workflows (ADW)** - Automated coding workflows using the Director pattern
+4. **[Firecrawl](https://github.com/mendableai/firecrawl-mcp-server)** - MCP server for web scraping and data extraction
+5. **AI Developer Workflows (ADW)** - Automated coding workflows using the Director pattern
 
 ### AI Developer Workflows
 
@@ -197,8 +198,26 @@ The system includes Goose extensions for browser automation:
 # Run the GitHub stars analyzer
 goose extension:bin/goose-github-stars.js "Analyze stars on GitHub repo octocat/Spoon-Knife"
 
+# Run web scraping with Firecrawl MCP
+goose "Scrape and summarize the content from https://example.com"
+
 # Add an extension to your Goose config for automatic loading
 vim ~/.config/goose/config.yaml
+```
+
+### Web Scraping with Firecrawl
+
+The system includes integration with Firecrawl MCP for advanced web scraping:
+
+```bash
+# Configure your Firecrawl API key (already set up in templates)
+export FIRECRAWL_API_KEY="your_api_key_here"
+
+# Use Goose with Firecrawl for web research
+goose "Research and summarize recent developments in AI safety"
+
+# Extract structured data from websites
+goose "Extract product information from https://store.example.com"
 ```
 
 ### Documentation Generation with Repomix
