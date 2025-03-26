@@ -1,0 +1,14 @@
+name: "install-analyzer"
+description: "Analyze dotfiles installation and provide remediation for issues"
+prompt: "prompts/install-analyzer.md"  # Default prompt (can be overridden by dynamic prompt)
+coder_model: "claude-3-sonnet-20240229"  # Model for coding/analysis
+evaluator_model: "claude-3-sonnet-20240229"  # Model for evaluation
+max_iterations: 1  # Only one pass needed for analysis
+execution_command: "echo 'Installation analysis complete'"  # Simple command for completion
+context_editable: []  # No files need to be edited during analysis
+context_read_only:
+  - "README.md"
+  - "install.sh"
+  - "tests/run_tests.sh"
+evaluator: "structured"  # Use structured evaluation
+log_file: "logs/install-analyzer.log" 

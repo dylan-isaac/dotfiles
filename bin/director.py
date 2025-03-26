@@ -11,13 +11,13 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, Union
+from typing import Dict, List, Literal, Optional, Union, Any
 
 import yaml
 from aider.coders import Coder
 from aider.io import InputOutput
 from aider.models import Model
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 # Set up environment variables if .env file exists
 if Path(".env").exists():
@@ -29,6 +29,66 @@ class EvaluationResult(BaseModel):
     success: bool
     feedback: Optional[str] = None
 
+class SecurityCheck(BaseModel):
+    """Security check results."""
+    passed: bool
+    issues: List[str] = Field(default_factory=list)
+    risk_level: Literal["low", "medium", "high", "critical"] = "low"
+    recommendations: List[str] = Field(default_factory=list)
+
+class TestResult(BaseModel):
+    """Results from running tests."""
+    passed: bool
+    total_tests: int
+    passed_tests: int
+    failed_tests: int
+    error_messages: List[str] = Field(default_factory=list)
+    coverage: Optional[float] = None
+
+class ChangesetItem(BaseModel):
+    """A single change made during the workflow."""
+    file: str
+    change_type: Literal["add", "modify", "delete"]
+    description: str
+    lines_changed: Optional[int] = None
+
+class WorkflowChangeset(BaseModel):
+    """Set of changes made during the workflow execution."""
+    changes: List[ChangesetItem] = Field(default_factory=list)
+    summary: str = ""
+
+class ProposedSolution(BaseModel):
+    """A potential solution proposed by the AI."""
+    approach: str
+    implementation_plan: List[str]
+    expected_outcome: str
+    files_to_modify: List[str] = Field(default_factory=list)
+    
+class ExecutionContext(BaseModel):
+    """Context for execution of the workflow."""
+    working_directory: str
+    environment_variables: Dict[str, str] = Field(default_factory=dict)
+    command_output: str = ""
+    exit_code: int = 0
+    execution_time: float = 0.0
+    
+class StructuredEvaluation(BaseModel):
+    """Structured evaluation of the workflow execution."""
+    success: bool
+    task_completion: float  # 0.0 to 1.0
+    security_check: SecurityCheck = Field(default_factory=SecurityCheck)
+    test_results: Optional[TestResult] = None
+    changeset: WorkflowChangeset = Field(default_factory=WorkflowChangeset)
+    feedback: str = ""
+    next_steps: List[str] = Field(default_factory=list)
+    
+    @field_validator('task_completion')
+    @classmethod
+    def validate_completion_percentage(cls, v):
+        if v < 0.0 or v > 1.0:
+            raise ValueError("Task completion must be between 0.0 and 1.0")
+        return v
+
 class DirectorConfig(BaseModel):
     """Configuration for the Director pattern."""
     prompt: str
@@ -38,8 +98,9 @@ class DirectorConfig(BaseModel):
     execution_command: str
     context_editable: List[str]
     context_read_only: List[str] = Field(default_factory=list)
-    evaluator: Literal["default", "unittest", "pytest", "custom"] = "default"
+    evaluator: Literal["default", "unittest", "pytest", "custom", "structured"] = "default"
     log_file: str = "director_log.txt"
+    use_structured_output: bool = False
 
 class Director:
     """
@@ -231,26 +292,6 @@ Remember to focus on passing the execution command: `{self.config.execution_comm
             self.log(f"⚠️ Execution error: {str(e)}")
             return f"ERROR: {str(e)}"
 
-    def evaluate_result(self, execution_output: str) -> EvaluationResult:
-        """
-        Evaluate the execution output using the specified evaluator.
-        
-        Args:
-            execution_output: The output from the execution command
-            
-        Returns:
-            An EvaluationResult with success status and feedback
-        """
-        if self.config.evaluator == "default":
-            return self._default_evaluator(execution_output)
-        elif self.config.evaluator == "unittest":
-            return self._unittest_evaluator(execution_output)
-        elif self.config.evaluator == "pytest":
-            return self._pytest_evaluator(execution_output)
-        else:
-            self.log(f"⚠️ Unknown evaluator: {self.config.evaluator}, using default")
-            return self._default_evaluator(execution_output)
-
     def _default_evaluator(self, execution_output: str) -> EvaluationResult:
         """
         Default evaluator using an LLM to assess success based on execution output.
@@ -391,6 +432,163 @@ Return a JSON object with the following format:
                 success=False,
                 feedback=f"Unable to determine test results. Output:\n{execution_output}"
             )
+
+    def _structured_evaluator(self, execution_output: str) -> EvaluationResult:
+        """
+        Evaluate execution output with structured response using Pydantic models.
+        
+        This evaluator provides a structured evaluation with detailed metrics,
+        security checks, test results, and a changeset of modifications.
+        
+        Args:
+            execution_output: Output from the execution command
+            
+        Returns:
+            An EvaluationResult based on the structured evaluation
+        """
+        self.log("🔍 Running structured evaluation...")
+        
+        # Construct the prompt for structured evaluation
+        prompt = f"""
+# Structured Evaluation
+
+Please evaluate the following execution output and provide a structured assessment.
+
+## Execution Output
+```
+{execution_output}
+```
+
+## Original Task Specification
+{self.config.prompt}
+
+## Required Response Format
+You must respond with a valid JSON object matching this Pydantic model:
+
+```python
+class StructuredEvaluation:
+    success: bool                      # Whether the overall task was successful
+    task_completion: float             # 0.0 to 1.0 indicating percentage of completion
+    security_check: {
+        passed: bool,                  # Whether security checks passed
+        issues: List[str],             # List of security issues found
+        risk_level: Literal["low", "medium", "high", "critical"],
+        recommendations: List[str]     # Security recommendations
+    }
+    test_results: Optional[{
+        passed: bool,                  # Whether all tests passed
+        total_tests: int,              # Total number of tests run
+        passed_tests: int,             # Number of tests that passed
+        failed_tests: int,             # Number of tests that failed
+        error_messages: List[str],     # Error messages from failed tests
+        coverage: Optional[float]      # Test coverage percentage if available
+    }]
+    changeset: {
+        changes: List[{
+            file: str,                 # File path
+            change_type: Literal["add", "modify", "delete"],
+            description: str,          # Description of the change
+            lines_changed: Optional[int]
+        }],
+        summary: str                   # Summary of all changes
+    }
+    feedback: str                      # Overall feedback
+    next_steps: List[str]              # Recommended next steps
+```
+
+## Guidelines for Evaluation
+1. Be accurate and precise in your assessment
+2. Note any security concerns or best practices violations
+3. Identify if the task requirements were fully met
+4. Provide specific, actionable feedback
+5. Suggest concrete next steps
+"""
+
+        # Call the appropriate LLM based on evaluator model
+        try:
+            if "gpt" in self.config.evaluator_model.lower():
+                # OpenAI
+                response = self.llm_client.chat.completions.create(
+                    model=self.config.evaluator_model,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0,
+                )
+                evaluation_json = response.choices[0].message.content
+            else:
+                # Anthropic or others
+                response = self.llm_client.messages.create(
+                    model=self.config.evaluator_model,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0,
+                )
+                evaluation_json = response.content[0].text
+                
+            # Extract JSON from the response if needed
+            if "```json" in evaluation_json:
+                evaluation_json = evaluation_json.split("```json")[1].split("```")[0].strip()
+            elif "```" in evaluation_json:
+                evaluation_json = evaluation_json.split("```")[1].split("```")[0].strip()
+                
+            # Parse the structured evaluation
+            structured_eval = StructuredEvaluation.parse_raw(evaluation_json)
+            
+            # Log the structured evaluation
+            self.log(f"📊 Structured Evaluation:\n{evaluation_json}", print_to_console=False)
+            self.log(f"✅ Success: {structured_eval.success}")
+            self.log(f"📈 Task Completion: {structured_eval.task_completion * 100:.1f}%")
+            self.log(f"🔒 Security Check: {'PASSED' if structured_eval.security_check.passed else 'FAILED'} (Risk: {structured_eval.security_check.risk_level})")
+            
+            if structured_eval.test_results:
+                self.log(f"🧪 Tests: {structured_eval.test_results.passed_tests}/{structured_eval.test_results.total_tests} passed")
+            
+            self.log(f"📝 Changes: {len(structured_eval.changeset.changes)} files modified")
+            self.log(f"💡 Feedback: {structured_eval.feedback}")
+            
+            # Convert to standard EvaluationResult
+            return EvaluationResult(
+                success=structured_eval.success,
+                feedback=f"""
+Task Completion: {structured_eval.task_completion * 100:.1f}%
+
+Security: {structured_eval.security_check.risk_level.upper()} risk
+{', '.join(structured_eval.security_check.issues) if structured_eval.security_check.issues else 'No issues found'}
+
+Changes: {structured_eval.changeset.summary}
+
+Feedback: {structured_eval.feedback}
+
+Next Steps:
+{chr(10).join(f'- {step}' for step in structured_eval.next_steps)}
+"""
+            )
+        except Exception as e:
+            self.log(f"❌ Error in structured evaluation: {str(e)}")
+            return EvaluationResult(
+                success=False,
+                feedback=f"Failed to perform structured evaluation: {str(e)}"
+            )
+
+    def evaluate_result(self, execution_output: str) -> EvaluationResult:
+        """
+        Evaluate the execution output using the specified evaluator.
+        
+        Args:
+            execution_output: The output from the execution command
+            
+        Returns:
+            An EvaluationResult with success status and feedback
+        """
+        if self.config.evaluator == "default":
+            return self._default_evaluator(execution_output)
+        elif self.config.evaluator == "unittest":
+            return self._unittest_evaluator(execution_output)
+        elif self.config.evaluator == "pytest":
+            return self._pytest_evaluator(execution_output)
+        elif self.config.evaluator == "structured":
+            return self._structured_evaluator(execution_output)
+        else:
+            # Custom evaluator
+            return self._default_evaluator(execution_output)
 
     def direct(self) -> bool:
         """

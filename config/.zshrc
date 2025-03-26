@@ -115,12 +115,13 @@ if [ -s "/opt/homebrew/opt/nvm/nvm.sh" ]; then
     # Create a new Node project with proper setup
     function create-node-project() {
         local project_name="${1:?Project name is required}"
-        local node_version="${2:-lts/*}"
+        local node_version="${2:-lts}"
         local project_type="${3:-basic}"  # basic, react, express, typescript
         
         # Create project directory
         if [ -d "$project_name" ]; then
-            read -p "Directory $project_name already exists. Overwrite? (y/n): " overwrite
+            echo "Directory $project_name already exists. Overwrite? (y/n): "
+            read overwrite
             if [[ ! $overwrite =~ ^[Yy]$ ]]; then
                 echo "Operation cancelled."
                 return 1
@@ -131,9 +132,18 @@ if [ -s "/opt/homebrew/opt/nvm/nvm.sh" ]; then
         cd "$project_name" || return
         
         # Set up Node version
-        nvm install "$node_version"
-        nvm use "$node_version"
-        echo "$node_version" > .nvmrc
+        if [[ "$node_version" == "lts" || "$node_version" == "lts/*" ]]; then
+            # Handle LTS specifically
+            nvm install --lts
+            nvm use --lts
+            # Store the actual version number in .nvmrc rather than "lts"
+            node -v > .nvmrc
+        else
+            # Handle specific version or other aliases
+            nvm install "$node_version"
+            nvm use "$node_version"
+            echo "$node_version" > .nvmrc
+        fi
         
         # Initialize package.json
         npm init -y
@@ -328,7 +338,8 @@ function create-venv() {
     # Check if venv already exists
     if [ -d "$venv_path" ]; then
         echo "Virtual environment already exists at $venv_path"
-        read -p "Do you want to recreate it? (y/n): " recreate
+        echo "Do you want to recreate it? (y/n): "
+        read recreate
         if [[ $recreate =~ ^[Yy]$ ]]; then
             echo "Removing existing environment..."
             rm -rf "$venv_path"
@@ -350,7 +361,8 @@ function create-venv() {
         if [ -n "$VIRTUAL_ENV" ]; then
             echo "Already in virtual environment: $VIRTUAL_ENV"
             if [ "$VIRTUAL_ENV" != "$(pwd)/$venv_path" ]; then
-                read -p "Switch to new environment? (y/n): " switch
+                echo "Switch to new environment? (y/n): "
+                read switch
                 if [[ $switch =~ ^[Yy]$ ]]; then
                     deactivate
                     source "$venv_path/bin/activate"

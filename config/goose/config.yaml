@@ -12,6 +12,16 @@ extensions:
     name: developer
     timeout: 300
     type: builtin
+  mcp-installer:
+    args:
+    - -y
+    - '@anaisbetts/mcp-installer'
+    cmd: npx
+    enabled: false
+    envs: {}
+    name: mcp-installer
+    timeout: 300
+    type: stdio
   mcp-server-fetch:
     args:
     - mcp-server-fetch

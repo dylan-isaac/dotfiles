@@ -198,6 +198,13 @@ run_ai_tests() {
         log "warn" "ADW system test not found, skipping"
     fi
     
+    # Run AI tools integration test
+    if [ -f "$DOTFILES_DIR/tests/ai_tools_test.sh" ]; then
+        run_test "AI tools integration" "bash '$DOTFILES_DIR/tests/ai_tools_test.sh'"
+    else
+        log "warn" "AI tools integration test not found, skipping"
+    fi
+    
     # Run additional AI tests if they exist
     run_tests_in_dir "$DOTFILES_DIR/tests/ai"
     run_tests_in_dir "$DOTFILES_DIR/tests/adw"

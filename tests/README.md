@@ -7,6 +7,8 @@ This directory contains tests to verify the integrity and functionality of your 
 ```
 .
 ├── README.md           # This file
+├── MANUAL_TESTING.md   # Comprehensive manual testing guide
+├── ai_tools_test.sh    # Automated AI tools integration tests
 └── run_tests.sh        # Main test runner script
 ```
 
@@ -23,6 +25,26 @@ This script executes all system tests, including:
 - Symlink integrity checks
 
 Tests can be run individually or as a complete suite.
+
+### MANUAL_TESTING.md
+
+A comprehensive guide for manually testing all AI-powered tools in the dotfiles repository, with a focus on:
+
+- AI Developer Workflows (ADW) using both the Classic Director pattern and PydanticAI implementation
+- Aider, Goose, and Repomix CLI tools
+- Integration between tools
+- Accessibility testing
+- Error handling
+
+### ai_tools_test.sh
+
+An automated test script that verifies:
+
+- Availability of all AI tools
+- Basic functionality of each tool
+- MCP server status
+- Error handling
+- Profile system
 
 ## Purpose
 

@@ -1,0 +1,18 @@
+#!/bin/zsh
+
+# dotfiles-analyzer - Wrapper for install-analyzer.sh
+# This script allows the installation analyzer to be run from anywhere
+
+# Determine dotfiles directory
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/Projects/dotfiles}"
+ANALYZER="${DOTFILES_DIR}/bin/install-analyzer.sh"
+
+# Check if analyzer exists
+if [ ! -f "$ANALYZER" ]; then
+    echo "Error: Could not find install-analyzer.sh at $ANALYZER"
+    echo "Make sure DOTFILES_DIR is set correctly (currently: $DOTFILES_DIR)"
+    exit 1
+fi
+
+# Run the analyzer with all arguments
+exec "$ANALYZER" "$@" 

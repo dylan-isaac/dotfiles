@@ -1,0 +1,26 @@
+#!/usr/bin/env python3
+"""
+PydanticAI-based AI Developer Workflow (ADW) runner
+
+This script provides a command-line interface for running AI Developer
+Workflows using the PydanticAI agent system.
+"""
+
+import os
+import sys
+from pathlib import Path
+
+# Add the dotfiles directory to the Python path
+DOTFILES_DIR = Path(os.path.expanduser("~/Projects/dotfiles"))
+PYDANTIC_ADW_DIR = DOTFILES_DIR / "bin" / "pydantic_adw"
+sys.path.insert(0, str(DOTFILES_DIR))
+
+try:
+    from bin.pydantic_adw.cli import main
+except ImportError as e:
+    print(f"Error: Could not import PydanticAI ADW CLI module: {e}")
+    print("Make sure the PydanticAI ADW implementation is installed correctly.")
+    sys.exit(1)
+
+if __name__ == "__main__":
+    sys.exit(main()) 

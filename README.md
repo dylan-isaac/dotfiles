@@ -14,6 +14,9 @@ cd ~/Projects/dotfiles
 
 # Or install with a specific profile
 ./install.sh --profile=work
+
+# Or use the AI-enhanced installation analyzer
+./bin/install-analyzer.sh
 ```
 
 ### Installation Options
@@ -33,7 +36,43 @@ cd ~/Projects/dotfiles
 
 # Combine options
 ./install.sh --quick --skip-apps --profile=minimal
+
+# Use AI-powered installation analyzer
+./bin/install-analyzer.sh --ai=goose --profile=work
+./bin/install-analyzer.sh --ai=pydantic --verbose
 ```
+
+### AI-Enhanced Installation
+
+The dotfiles include an AI-powered installation analyzer that:
+
+1. Runs the installation process and captures its output
+2. Uses AI (either Goose or PydanticAI) to analyze the results
+3. Determines if the installation was successful
+4. Creates a detailed remediation plan for any issues
+5. Provides contextually relevant advice based on your system
+
+```bash
+# Run installation with AI analysis (default: PydanticAI)
+./bin/install-analyzer.sh
+
+# Choose which AI engine to use
+./bin/install-analyzer.sh --ai=goose
+./bin/install-analyzer.sh --ai=pydantic
+
+# Show verbose installation output
+./bin/install-analyzer.sh --verbose
+
+# Pass any standard install.sh arguments
+./bin/install-analyzer.sh --profile=work --skip-apps
+
+# Use the convenient wrapper script
+./bin/dotfiles-analyzer --ai=goose --verbose
+```
+
+The analyzer saves all logs and analysis to a timestamped directory in `/tmp/` for your reference.
+
+For detailed usage instructions and troubleshooting, see the [Installation Analyzer documentation](bin/README.md#installation-analyzer).
 
 ## 📦 System Overview
 
@@ -103,18 +142,43 @@ The dotfiles include setup for these AI coding assistants:
 
 ### AI Developer Workflows
 
-The Director pattern (described in [`contexts/ADW.md`](contexts/ADW.md)) allows you to create autonomous AI coding workflows:
+The system supports two ADW implementations:
 
-1. Profile-specific workflows are defined in `config/adw/`
-2. Run a workflow using:
-   ```bash
-   ai-workflow [workflow_name]
-   ```
-3. List available workflows:
-   ```bash
-   ai-workflow --list
-   ```
-4. Logs are stored in `config/adw/logs/` for easy review and debugging
+#### 1. Classic Director Pattern
+
+The original Director pattern (described in [`contexts/ADW.md`](contexts/ADW.md)) enables these automated workflows:
+
+```bash
+# Run a workflow
+ai-workflow workflow-name
+
+# List available workflows
+ai-workflow --list
+```
+
+#### 2. PydanticAI-based Implementation
+
+A modern, type-safe implementation using the PydanticAI agent system:
+
+```bash
+# Run a workflow with enhanced features
+pai-workflow workflow-name
+
+# List available workflows
+pai-workflow --list
+
+# Run with custom prompt
+pai-workflow workflow-name --prompt="Task description"
+```
+
+Key features of the PydanticAI implementation:
+
+- **Type Safety**: Fully typed with Pydantic models
+- **Iteration-Aware Prompting**: Customized prompts for each iteration
+- **Structured Evaluation**: Detailed metrics for progress tracking
+- **Failure Analysis**: Comprehensive debugging information
+
+See [`contexts/ADW.md`](contexts/ADW.md) for detailed documentation on both implementations.
 
 ### Browser Automation with Goose
 
@@ -179,10 +243,53 @@ See the [Profile System documentation](config/profiles/README.md) for more detai
 This repository includes tools for maintaining system integrity:
 
 - **System Tests**: Run `./tests/run_tests.sh` to verify your configuration
+- **Manual Testing Guide**: Follow `tests/MANUAL_TESTING.md` for comprehensive testing of AI tools
+- **Automated AI Tools Test**: Run `./tests/ai_tools_test.sh` to quickly verify AI tool functionality
 - **Changelog**: System modifications are tracked in `CHANGELOG.md`
 - **ADW for Maintenance**: Use AI workflows for system updates and maintenance
+- **Homebrew Manager**: Run `./bin/brew-manager.sh` to safely manage Homebrew taps and packages
+- **Installation Analyzer**: Run `./bin/install-analyzer.sh` to get AI-powered analysis of installation issues
 
 For details on system maintenance, see [contexts/ADW.md](contexts/ADW.md).
+
+### Installation Analysis
+
+The Installation Analyzer provides AI-powered diagnostics for your dotfiles installation:
+
+```bash
+# Run a fresh installation with AI analysis
+./bin/install-analyzer.sh --verbose
+
+# Analyze a specific profile installation
+./bin/install-analyzer.sh --profile=minimal
+
+# Choose between Goose and PydanticAI analysis engines
+./bin/install-analyzer.sh --ai=goose
+./bin/install-analyzer.sh --ai=pydantic
+
+# Use the convenient wrapper script from anywhere
+dotfiles-analyzer --quick --verbose
+```
+
+The analyzer will:
+1. Run the installation process
+2. Capture and analyze all output
+3. Determine if there were any errors or warnings
+4. Create a contextually relevant recovery plan
+5. Save detailed logs for future reference
+
+This is especially useful when setting up a new machine or updating to a new macOS version where compatibility issues might arise.
+
+#### Testing the Analyzer
+
+You can verify the analyzer's functionality without running a full installation:
+
+```bash
+# Run the test script to analyze a mock installation log
+./tests/test_install_analyzer.sh
+```
+
+This creates a realistic mock installation log with common issues and runs the analyzer on it, allowing you to see how it identifies and suggests fixes for problems.
 
 ## 📝 Extending Your System
 
@@ -265,7 +372,7 @@ The dotfiles configure Node.js with enhanced tools for better development:
   create-node-project my-project 18.19.0
   
   # Create a project with a specific template (basic, react, express, typescript)
-  create-node-project my-project lts/* typescript
+  create-node-project my-project lts typescript
   ```
 
 #### Usage Examples

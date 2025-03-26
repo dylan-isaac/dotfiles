@@ -14,3 +14,7 @@ config/local/
 *.backup
 *.bak
 .dotfiles.backup*
+
+/config/adw/logs/*
+!/config/adw/logs/README.md
+
