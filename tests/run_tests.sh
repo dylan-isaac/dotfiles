@@ -142,6 +142,9 @@ run_script_tests() {
     # Test macos.sh syntax
     run_test "macos.sh syntax" "zsh -n '$DOTFILES_DIR/scripts/macos.sh'"
     
+    # Test scaffold.sh
+    run_test "scaffold system" "bash '$DOTFILES_DIR/tests/test_scaffold.sh'"
+    
     # Run additional script tests if they exist
     run_tests_in_dir "$DOTFILES_DIR/tests/scripts"
 }

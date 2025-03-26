@@ -319,6 +319,9 @@ For rapid verification of the entire system, use this quick testing checklist:
 
 # Profile switching test
 source bin/dotfiles-profile set work && source bin/dotfiles-profile set personal
+
+# Scaffold system test
+./tests/test_scaffold.sh
 ```
 
 ### AI Tools Quick Test
@@ -354,6 +357,73 @@ aider hello_world.py
 # Test generating documentation with Repomix
 cd ~/Projects/dotfiles
 repomix --include="README.md" --style markdown --output=/tmp/readme.md
+
+# Test creating a project with the scaffold system
+rm -rf /tmp/mcp-test 2>/dev/null
+scaffold --type mcp --path /tmp/mcp-test
+ls -la /tmp/mcp-test/mcp-tool
 ```
 
-This quick testing approach should help verify the system is working as expected without having to run through all the detailed test cases. 
+## 12. Testing Project Scaffold System
+
+The project scaffold system allows you to quickly create new projects with predefined templates.
+
+### Setup
+
+```bash
+# Verify the script is executable
+which scaffold
+```
+
+#### Test Cases
+
+1. **Basic MCP Scaffold Creation**
+   - **Command**: `scaffold --type mcp --path /tmp`
+   - **Success Case**: Creates a new MCP tool project at `/tmp/mcp-tool` with the correct structure
+   - **Failure Case**: Script fails or creates incomplete project structure
+
+2. **Error Handling - Missing Type Parameter**
+   - **Command**: `scaffold --path /tmp`
+   - **Success Case**: Displays error message "Scaffold type is required" and usage information
+   - **Failure Case**: Silent failure or incorrect error message
+
+3. **Error Handling - Invalid Type Parameter**
+   - **Command**: `scaffold --type nonexistent --path /tmp`
+   - **Success Case**: Displays error message "Scaffold type 'nonexistent' not recognized" 
+   - **Failure Case**: Silent failure or incorrect error message
+
+4. **Custom Path Parameter**
+   - **Command**: `scaffold --type mcp --path /tmp/custom-path`
+   - **Success Case**: Creates the MCP tool project in the specified custom path
+   - **Failure Case**: Ignores custom path or fails to create project
+
+### Verification
+
+After running the scaffold command, verify:
+1. The directory structure is correct:
+   ```
+   mcp-tool/
+   ├── README.md
+   ├── .gitignore
+   ├── src/
+   │   └── main.py
+   └── tests/
+   ```
+
+2. The `main.py` file contains a basic FastMCP server setup
+3. All files have correct permissions and content
+
+### Automated Testing
+
+To run the automated tests for the scaffold system:
+
+```bash
+# Run the scaffold test script
+./tests/test_scaffold.sh
+```
+
+This test script verifies:
+- Script exists and is executable
+- Error handling for missing and invalid parameters
+- MCP scaffold creation with correct file structure
+- Custom path parameter functionality

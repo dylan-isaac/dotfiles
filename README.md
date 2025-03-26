@@ -362,6 +362,7 @@ The dotfiles configure Python with modern tools for a better development experie
 
 - **Virtual environments**: Create with `create-venv [name]`
 - **Package management**: Use UV commands with aliases like `uvpip`, `uvinstall`, etc.
+- **Project scaffolding**: Create project templates with `scaffold --type mcp --path <path>`
 
 #### Configuration
 
@@ -414,3 +415,22 @@ create-node-project my-project 18.19.0
 cd my-project
 npx some-package
 ```
+
+#### Project Scaffolding
+
+The system includes a scaffolding tool to quickly create new projects with best practices:
+
+```bash
+# Create a new MCP tool project
+scaffold --type mcp --path ~/Projects
+
+# Create other project types (more types coming soon)
+scaffold --type <project-type> --path <destination-path>
+```
+
+The `scaffold` command is available in your PATH after installation, so you can use it from anywhere.
+
+Available scaffold types:
+- **mcp**: Creates a new MCP tool project with FastMCP server setup
+
+The scaffolding system is extensible - see [`scripts/scaffold-scripts/`](scripts/scaffold-scripts/) for implementation details.
