@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Test script for create_workflow
-# Description: Create a rickroll.md file with emoji
+# Description: Create a README.md for a weather app with emoji and ASCII art
 
 set -e  # Exit on error
 

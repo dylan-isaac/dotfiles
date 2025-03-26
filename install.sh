@@ -847,9 +847,22 @@ setup_local_config() {
             sed -i '' 's/# ENVIRONMENT_TYPE="work"/# ENVIRONMENT_TYPE="work"/' "$zshrc_local_file"
         fi
         
+        # Add dotfiles bin to PATH if not already there
+        echo "" >> "$zshrc_local_file"
+        echo "# Add dotfiles bin to PATH" >> "$zshrc_local_file"
+        echo "export PATH=\"\$HOME/Projects/dotfiles/bin:\$PATH\"" >> "$zshrc_local_file"
+        
         log "info" "Created $zshrc_local_file - remember to add your API keys!"
     else
         log "info" "Machine-specific zsh config already exists, not overwriting"
+        
+        # Add dotfiles bin to PATH if not already there
+        if ! grep -q "export PATH.*dotfiles/bin" "$zshrc_local_file"; then
+            log "info" "Adding dotfiles bin to PATH in .zshrc.local"
+            echo "" >> "$zshrc_local_file"
+            echo "# Add dotfiles bin to PATH" >> "$zshrc_local_file"
+            echo "export PATH=\"\$HOME/Projects/dotfiles/bin:\$PATH\"" >> "$zshrc_local_file"
+        fi
     fi
     
     # Link the machine-specific config to home directory for zsh to source it
@@ -872,6 +885,7 @@ verify_installation() {
     # Update PATH to include potential locations for installed tools
     export PATH="$HOME/.local/bin:$PATH"
     export PATH="$HOME/.goose/bin:$PATH"
+    export PATH="$DOTFILES_DIR/bin:$PATH"  # Add dotfiles bin directory to PATH
     
     # Check core tools
     for cmd in brew git python3; do

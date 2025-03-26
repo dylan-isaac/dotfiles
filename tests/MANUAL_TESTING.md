@@ -152,10 +152,10 @@ repomix --version
    - **Success Case**: Creates a single file with repository content
    - **Failure Case**: Error in processing repository or empty output
 
-2. **Output Format Options**
-   - **Command**: `repomix --format=xml`
-   - **Success Case**: Output in specified format (XML)
-   - **Failure Case**: Format not applied or conversion error
+2. **Output Style Options**
+   - **Command**: `repomix --style=markdown`
+   - **Success Case**: Output in specified format (Markdown)
+   - **Failure Case**: Style not applied or conversion error
 
 3. **File Pattern Filtering**
    - **Command**: `repomix --include="src/**/*.js" --exclude="node_modules"`
@@ -298,3 +298,57 @@ When adding new test cases:
 3. Include both success and failure scenarios
 4. Consider accessibility implications
 5. Document expected outcomes clearly 
+
+## 11. Quick Testing Checklist
+
+For rapid verification of the entire system, use this quick testing checklist:
+
+### Core Components Quick Test
+
+```bash
+# Quick verification of all core components
+./tests/run_tests.sh
+
+# Quick verification of just AI tools
+./tests/ai_tools_test.sh
+
+# Profile switching test
+source bin/dotfiles-profile set work && source bin/dotfiles-profile set personal
+```
+
+### AI Tools Quick Test
+
+```bash
+# Verify AI tool commands are available
+which ai-workflow pai-workflow aider goose repomix
+
+# Test ai-workflow (minimal)
+ai-workflow --list
+
+# Test pai-workflow (minimal)
+python bin/pai-workflow --list
+
+# Test Aider (minimal - cancel immediately with Ctrl+C)
+aider --help
+
+# Test Goose (minimal)
+goose --version
+
+# Test Repomix (minimal)
+repomix --version
+```
+
+### Minimal Integration Test
+
+```bash
+# Create a test file with Goose and then edit it with Aider
+cd /tmp
+goose "Create a simple Python script that prints Hello World"
+aider hello_world.py
+
+# Test generating documentation with Repomix
+cd ~/Projects/dotfiles
+repomix --include="README.md" --style markdown --output=/tmp/readme.md
+```
+
+This quick testing approach should help verify the system is working as expected without having to run through all the detailed test cases. 

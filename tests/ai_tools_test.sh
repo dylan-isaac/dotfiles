@@ -37,7 +37,7 @@ test_tools_available() {
     fi
     
     # Test goose
-    if command -v goose &>/dev/null; then
+    if command -v goose &>/dev/null || [ -f "$HOME/.goose/bin/goose" ]; then
         log "success" "✅ Goose is available"
     else
         log "error" "❌ Goose is not available"
@@ -45,7 +45,7 @@ test_tools_available() {
     fi
     
     # Test repomix (could be through npx)
-    if command -v repomix &>/dev/null || (command -v npx &>/dev/null && npx --no-install repomix --version &>/dev/null); then
+    if command -v repomix &>/dev/null || npm list -g repomix &>/dev/null; then
         log "success" "✅ Repomix is available"
     else
         log "error" "❌ Repomix is not available"
@@ -53,7 +53,7 @@ test_tools_available() {
     fi
     
     # Test ai-workflow
-    if command -v ai-workflow &>/dev/null; then
+    if command -v ai-workflow &>/dev/null || [ -f "$DOTFILES_DIR/bin/ai-workflow" ]; then
         log "success" "✅ ai-workflow is available"
     else
         log "error" "❌ ai-workflow is not available"
@@ -61,7 +61,7 @@ test_tools_available() {
     fi
     
     # Test pai-workflow
-    if command -v pai-workflow &>/dev/null; then
+    if command -v pai-workflow &>/dev/null || [ -f "$DOTFILES_DIR/bin/pai-workflow" ]; then
         log "success" "✅ pai-workflow is available"
     else
         log "error" "❌ pai-workflow is not available"
@@ -79,11 +79,14 @@ test_tools_available() {
 test_ai_workflow_list() {
     log "info" "Testing ai-workflow --list functionality..."
     
-    # Run the command and capture output
-    output=$(ai-workflow --list 2>&1)
+    local ai_workflow_cmd="ai-workflow"
+    if ! command -v ai-workflow &>/dev/null && [ -f "$DOTFILES_DIR/bin/ai-workflow" ]; then
+        ai_workflow_cmd="$DOTFILES_DIR/bin/ai-workflow"
+    fi
     
-    # Check if output contains workflows
-    if echo "$output" | grep -q "workflow"; then
+    local output=$($ai_workflow_cmd --list 2>/dev/null)
+    
+    if [[ "$output" == *"workflow"* || "$output" == *"Available workflows"* ]]; then
         log "success" "✅ ai-workflow --list shows workflows"
         return 0
     else
@@ -97,11 +100,14 @@ test_ai_workflow_list() {
 test_pai_workflow_list() {
     log "info" "Testing pai-workflow --list functionality..."
     
-    # Run the command and capture output
-    output=$(pai-workflow --list 2>&1)
+    local pai_workflow_cmd="pai-workflow"
+    if ! command -v pai-workflow &>/dev/null && [ -f "$DOTFILES_DIR/bin/pai-workflow" ]; then
+        pai_workflow_cmd="python $DOTFILES_DIR/bin/pai-workflow"
+    fi
     
-    # Check if output contains workflows
-    if echo "$output" | grep -q "workflow"; then
+    local output=$($pai_workflow_cmd --list 2>/dev/null)
+    
+    if [[ "$output" == *"workflow"* || "$output" == *"Available workflows"* ]]; then
         log "success" "✅ pai-workflow --list shows workflows"
         return 0
     else

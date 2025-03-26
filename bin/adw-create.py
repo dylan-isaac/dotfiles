@@ -190,6 +190,9 @@ fi
 
 def run_repomix(workflow_name, verbose=False):
     """Run repomix after a workflow to create a compact representation."""
+    # First, check if Repomix MCP server is running
+    check_and_start_repomix_mcp_server(verbose)
+    
     if os.path.exists(REPOMIX_SCRIPT):
         print(f"\nCreating repomix representation for workflow: {workflow_name}")
         
@@ -213,6 +216,44 @@ def run_repomix(workflow_name, verbose=False):
     else:
         print(f"Warning: repomix script not found at {REPOMIX_SCRIPT}")
         return False
+
+def check_and_start_repomix_mcp_server(verbose=False):
+    """Check if Repomix MCP server is running and start it if it's not."""
+    try:
+        # Check if the server is running
+        result = subprocess.run(
+            ["ps", "aux"], 
+            check=True, 
+            capture_output=True, 
+            text=True
+        )
+        
+        if "repomix --mcp" not in result.stdout:
+            if verbose:
+                print("Repomix MCP server is not running. Attempting to start...")
+            
+            # Check if plist file exists
+            plist_path = os.path.expanduser("~/Library/LaunchAgents/com.repomix.mcp.plist")
+            if os.path.exists(plist_path):
+                # Ensure logs directory exists
+                repomix_logs = os.path.expanduser("~/.repomix/logs")
+                os.makedirs(repomix_logs, exist_ok=True)
+                
+                # Start the service
+                subprocess.run(
+                    ["launchctl", "load", plist_path],
+                    check=False,
+                    capture_output=True
+                )
+                
+                if verbose:
+                    print("Repomix MCP server started.")
+            else:
+                if verbose:
+                    print("Repomix MCP server plist file not found.")
+    except Exception as e:
+        if verbose:
+            print(f"Error checking/starting Repomix MCP server: {e}")
 
 def list_available_workflows():
     """List all available workflows in the ADW directory."""
@@ -240,7 +281,15 @@ def list_available_workflows():
         print("No workflows found")
 
 def main():
-    parser = argparse.ArgumentParser(description="Create and run contextual AI automations")
+    # Define a custom error handler for argument parsing
+    class CustomArgumentParser(argparse.ArgumentParser):
+        def error(self, message):
+            print(f"Error: {message}")
+            print("\nHere's how to use this command:")
+            self.print_help()
+            return 2
+
+    parser = CustomArgumentParser(description="Create and run contextual AI automations")
     parser.add_argument("description", nargs="?", help="Natural language description of what you want to automate")
     parser.add_argument("--files", "-f", nargs="+", help="Files to include in the automation context")
     parser.add_argument("--test", "-t", help="Command to test the automation")
@@ -253,62 +302,76 @@ def main():
     
     args = parser.parse_args()
     
-    # Check if we just want to list workflows
+    # List available workflows if requested
     if args.list:
         list_available_workflows()
         return 0
     
-    # Get description from argument or prompt
-    description = args.description
-    if not description:
-        print("What would you like to automate? (describe in natural language)")
-        description = input("> ")
-    
-    # Get current directory
-    current_dir = os.getcwd()
-    
-    # Models configuration
-    models = get_model_from_profile()
-    if args.model:
-        models["coder_model"] = args.model
-    
-    # Override repomix setting if flag is provided
-    if args.no_repomix:
-        models["enable_repomix"] = False
-    
-    # Generate the workflow YAML
-    workflow_path, workflow_name = generate_workflow_yaml(
-        description=description,
-        current_dir=current_dir,
-        test_command=args.test,
-        editable_files=args.files,
-        context_files=args.context,
-        models=models
-    )
-    
-    # Generate test script
-    test_path = generate_test_script(description, workflow_name, current_dir)
-    
-    print(f"Created workflow: {workflow_path}")
-    print(f"Created test script: {test_path}")
-    
-    # Run the workflow unless --create-only flag is set
-    workflow_success = False
-    if not args.create_only:
-        if os.path.exists(DIRECTOR_PY):
-            print(f"\nRunning workflow: {workflow_name}")
-            result = subprocess.run([sys.executable, DIRECTOR_PY, "-c", workflow_path], check=False)
-            workflow_success = result.returncode == 0
-            print(f"Workflow {'completed successfully' if workflow_success else 'failed'}")
+    try:
+        # Get current directory for context
+        current_dir = os.getcwd()
+        
+        # Parse description or use a named workflow
+        if args.description and args.description in [w[:-5] for w in os.listdir(ADW_DIR) if w.endswith(".yaml")]:
+            # Use an existing workflow
+            workflow_name = args.description
+            workflow_path = os.path.join(ADW_DIR, f"{workflow_name}.yaml")
+            print(f"Using existing workflow: {workflow_name}")
+        elif args.description:
+            # Get model settings based on current profile
+            models = get_model_from_profile()
+            
+            # Override model if specified
+            if args.model:
+                models["coder_model"] = args.model
+                models["evaluator_model"] = args.model
+            
+            description = args.description
+            
+            # Create a new workflow based on the description
+            print(f"Creating workflow for: {description}")
+            workflow_path, workflow_name = generate_workflow_yaml(
+                description=description,
+                current_dir=current_dir,
+                test_command=args.test,
+                editable_files=args.files,
+                context_files=args.context,
+                models=models
+            )
+            
+            # Generate test script
+            test_path = generate_test_script(description, workflow_name, current_dir)
+            
+            print(f"Created workflow: {workflow_path}")
+            print(f"Created test script: {test_path}")
         else:
-            print(f"Warning: director.py not found at {DIRECTOR_PY}")
-            print("The workflow has been created but cannot be run.")
-    
-    # Run repomix if the workflow was successful
-    if workflow_success and models.get("enable_repomix", ENABLE_REPOMIX):
-        run_repomix(workflow_name, args.verbose)
-    
-    return 0
+            print("Error: No workflow description provided")
+            parser.print_help()
+            return 1
+        
+        # Run the workflow unless --create-only flag is set
+        workflow_success = False
+        if not args.create_only:
+            if os.path.exists(DIRECTOR_PY):
+                print(f"\nRunning workflow: {workflow_name}")
+                result = subprocess.run([sys.executable, DIRECTOR_PY, "-c", workflow_path], check=False)
+                workflow_success = result.returncode == 0
+                print(f"Workflow {'completed successfully' if workflow_success else 'failed'}")
+            else:
+                print(f"Warning: director.py not found at {DIRECTOR_PY}")
+                print("The workflow has been created but cannot be run.")
+        
+        # Run repomix if the workflow was successful
+        if workflow_success and models.get("enable_repomix", ENABLE_REPOMIX):
+            run_repomix(workflow_name, args.verbose)
+        
+        return 0
+    except Exception as e:
+        print(f"Error: {e}")
+        import traceback
+        if args.verbose:
+            traceback.print_exc()
+        return 1
 
 if __name__ == "__main__":
     sys.exit(main()) 

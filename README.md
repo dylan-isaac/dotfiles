@@ -155,8 +155,8 @@ ai-workflow workflow-name
 # List available workflows
 ai-workflow --list
 
-# Run with custom prompt
-ai-workflow "Your custom task description" 
+# Run with custom task description
+ai-workflow "Add input validation to this function" 
 
 # Include files for context
 ai-workflow "Update error handling" --files bin/director.py
