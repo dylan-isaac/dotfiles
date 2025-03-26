@@ -1,0 +1,20 @@
+prompt: |
+  Verify that all documented features are properly implemented.
+  1. Compare README documentation with actual code implementation
+  2. Check for any missing or incomplete features
+  3. Identify any undocumented features that should be added to READMEs
+  4. Create a report of findings with recommendations for improvements
+  
+  Focus on ensuring consistency between documentation and implementation.
+coder_model: "gpt-4o"
+evaluator_model: "gpt-4o"
+execution_command: "./tests/run_tests.sh"
+context_editable:
+  - "tests/feature_verification_report.md"
+context_read_only:
+  - "README.md"
+  - "*/README.md"
+  - "install.sh"
+  - "bin/*"
+  - "config/*"
+  - "scripts/*" 

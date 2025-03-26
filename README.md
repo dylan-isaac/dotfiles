@@ -79,6 +79,12 @@ Each directory contains its own README with detailed information about its purpo
 - Python setup with pyenv and UV (modern Python package manager)
 - Other development tools
 
+### Security Features
+- Git security check for detecting sensitive information
+- API key leak detection in code changes
+- Environment placeholder verification
+- Automated security tests
+
 ### macOS Configuration
 - System preferences
 - Finder preferences
@@ -108,6 +114,34 @@ The Director pattern (described in [`contexts/ADW.md`](contexts/ADW.md)) allows 
    ```bash
    ai-workflow --list
    ```
+4. Logs are stored in `config/adw/logs/` for easy review and debugging
+
+### Browser Automation with Goose
+
+The system includes Goose extensions for browser automation:
+
+```bash
+# Run the GitHub stars analyzer
+goose --load-extension=bin/goose-github-stars.js "Analyze stars on GitHub repo octocat/Spoon-Knife"
+
+# Add an extension to your Goose config for automatic loading
+vim ~/.config/goose/config.yaml
+```
+
+### Documentation Generation with Repomix
+
+The system includes a tool for generating comprehensive documentation:
+
+```bash
+# Generate documentation for a component
+./bin/generate-docs.sh bin
+
+# Copy documentation to clipboard
+./bin/generate-docs.sh --clipboard config/profiles
+
+# Specify custom template
+./bin/generate-docs.sh --template=my-template.md tests
+```
 
 ## 🔐 Sensitive Configuration
 
@@ -148,7 +182,7 @@ This repository includes tools for maintaining system integrity:
 - **Changelog**: System modifications are tracked in `CHANGELOG.md`
 - **ADW for Maintenance**: Use AI workflows for system updates and maintenance
 
-For details on system maintenance, see [ADW.md](ADW.md).
+For details on system maintenance, see [contexts/ADW.md](contexts/ADW.md).
 
 ## 📝 Extending Your System
 

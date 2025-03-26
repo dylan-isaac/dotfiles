@@ -1,0 +1,5 @@
+alias:
+- fast:gpt-4o-mini
+- smart:gpt-4o
+- opus:claude-3-opus-20240229
+- sonnet:claude-3-sonnet-20240229

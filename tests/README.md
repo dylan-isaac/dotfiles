@@ -121,7 +121,7 @@ The ADW system can be used to create and maintain tests:
 3. Run tests automatically after system changes
 4. Document test results in the changelog
 
-See [ADW.md](../ADW.md) for details on using AI for testing.
+See [contexts/ADW.md](../contexts/ADW.md) for details on using AI for testing.
 
 ## Best Practices
 

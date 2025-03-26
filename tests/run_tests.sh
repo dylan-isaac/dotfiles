@@ -24,12 +24,22 @@ while [[ "$#" -gt 0 ]]; do
     case $1 in
         --category=*) CATEGORY="${1#*=}" ;;
         --verbose) VERBOSE=true ;;
-        --help) 
-            echo "Usage: ./run_tests.sh [options]"
+        -h|--help)
+            echo "Dotfiles Test Runner"
+            echo "Usage: $0 [options]"
+            echo ""
             echo "Options:"
-            echo "  --category=CATEGORY    Run tests for specific category (config, scripts, profiles, all)"
-            echo "  --verbose              Show detailed test output"
-            echo "  --help                 Show this help message"
+            echo "  -c, --category CATEGORY   Run tests in specific category"
+            echo "                            (config, profile, scripts, ai, docs, security, browser)"
+            echo "  -q, --quiet               Run with minimal output"
+            echo "  -v, --verbose             Run with verbose output"
+            echo "  --no-color                Disable colored output"
+            echo "  -h, --help                Show this help message"
+            echo ""
+            echo "Examples:"
+            echo "  $0                        Run all tests"
+            echo "  $0 -c config              Run only config tests"
+            echo "  $0 -c security -v         Run security tests with verbose output"
             exit 0
             ;;
         *) echo -e "${RED}Unknown parameter: $1${NC}"; exit 1 ;;
@@ -162,11 +172,113 @@ run_ai_tests() {
     if [ -f "$DOTFILES_DIR/bin/director.py" ]; then
         run_test "director.py syntax" "python -m py_compile '$DOTFILES_DIR/bin/director.py'"
     else
-        log "warn" "Director script not found, skipping tests"
+        log "info" "Extracting director.py from ADW.md..."
+        if [ -f "$DOTFILES_DIR/contexts/ADW.md" ]; then
+            # Extract director.py from ADW.md
+            sed -n '/```python:director.py/,/```/p' "$DOTFILES_DIR/contexts/ADW.md" | sed '1d;$d' > "$DOTFILES_DIR/bin/director.py"
+            chmod +x "$DOTFILES_DIR/bin/director.py"
+            log "success" "Extracted director.py from ADW.md"
+            run_test "director.py syntax" "python -m py_compile '$DOTFILES_DIR/bin/director.py'"
+        else
+            log "warn" "ADW.md not found, cannot extract director.py"
+        fi
+    fi
+    
+    # Test adw-create.py syntax
+    if [ -f "$DOTFILES_DIR/bin/adw-create.py" ]; then
+        run_test "adw-create.py syntax" "python -m py_compile '$DOTFILES_DIR/bin/adw-create.py'"
+    else
+        log "warn" "adw-create.py not found, skipping test"
+    fi
+    
+    # Run ADW system test if it exists
+    if [ -f "$DOTFILES_DIR/tests/adw/test_adw_system.sh" ]; then
+        run_test "ADW system" "bash '$DOTFILES_DIR/tests/adw/test_adw_system.sh'"
+    else
+        log "warn" "ADW system test not found, skipping"
     fi
     
     # Run additional AI tests if they exist
     run_tests_in_dir "$DOTFILES_DIR/tests/ai"
+    run_tests_in_dir "$DOTFILES_DIR/tests/adw"
+}
+
+# Documentation tests
+run_doc_tests() {
+    log "info" "Running documentation tests..."
+    
+    # Test README existence
+    run_test "main README exists" "[ -f '$DOTFILES_DIR/README.md' ]"
+    
+    # Test directory READMEs existence
+    for dir in bin config contexts examples packages scripts tests; do
+        if [ -d "$DOTFILES_DIR/$dir" ]; then
+            run_test "$dir README exists" "[ -f '$DOTFILES_DIR/$dir/README.md' ]"
+        fi
+    done
+    
+    # Test README references
+    run_test "READMEs cross-references" "grep -q 'README' '$DOTFILES_DIR/README.md'"
+    
+    # Test CHANGELOG exists
+    run_test "CHANGELOG exists" "[ -f '$DOTFILES_DIR/CHANGELOG.md' ]"
+    
+    # Run additional documentation tests if they exist
+    run_tests_in_dir "$DOTFILES_DIR/tests/docs"
+}
+
+# Function to run security tests
+run_security_tests() {
+    log_section "Security Tests"
+    
+    # Check if test directory exists
+    if [ ! -d "$TEST_DIR/security" ]; then
+        log_warn "Security tests directory not found. Skipping security tests."
+        return 0
+    fi
+    
+    # Run git security check test
+    if [ -f "$TEST_DIR/security/test_git_security_check.sh" ]; then
+        log_info "Running Git security check test..."
+        $TEST_DIR/security/test_git_security_check.sh
+        if [ $? -eq 0 ]; then
+            log_success "Git security check test passed"
+        else
+            log_error "Git security check test failed"
+            FAILED_TESTS=$((FAILED_TESTS+1))
+        fi
+    else
+        log_warn "Git security check test not found"
+    fi
+    
+    log_info "Security tests completed"
+}
+
+# Function to run browser tests
+run_browser_tests() {
+    log_section "Browser Integration Tests"
+    
+    # Check if test directory exists
+    if [ ! -d "$TEST_DIR/browser" ]; then
+        log_warn "Browser tests directory not found. Skipping browser tests."
+        return 0
+    fi
+    
+    # Run GitHub stars extension test
+    if [ -f "$TEST_DIR/browser/test_github_stars.sh" ]; then
+        log_info "Running GitHub Stars extension test..."
+        $TEST_DIR/browser/test_github_stars.sh
+        if [ $? -eq 0 ]; then
+            log_success "GitHub Stars extension test passed"
+        else
+            log_error "GitHub Stars extension test failed"
+            FAILED_TESTS=$((FAILED_TESTS+1))
+        fi
+    else
+        log_warn "GitHub Stars extension test not found"
+    fi
+    
+    log_info "Browser tests completed"
 }
 
 # Main function to run all tests
@@ -181,12 +293,18 @@ main() {
         run_script_tests
         run_profile_tests
         run_ai_tests
+        run_doc_tests
+        run_security_tests
+        run_browser_tests
     else
         case "$CATEGORY" in
             "config") run_config_tests ;;
             "scripts") run_script_tests ;;
             "profiles") run_profile_tests ;;
             "ai") run_ai_tests ;;
+            "docs") run_doc_tests ;;
+            "security") run_security_tests ;;
+            "browser") run_browser_tests ;;
             *) log "error" "Unknown test category: $CATEGORY"; exit 1 ;;
         esac
     fi

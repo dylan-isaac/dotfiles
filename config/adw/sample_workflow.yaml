@@ -1,0 +1,11 @@
+prompt: "Create a greeting function that takes a name parameter and returns a greeting."
+coder_model: "claude-3-sonnet-20240229"  # Use Claude 3 Sonnet
+evaluator_model: "gpt-4o"               # Use GPT-4o for evaluation
+max_iterations: 3                       # Try up to 3 times
+execution_command: "echo 'Testing workflow...'"
+context_editable: 
+  - "config/adw/sample.py"               # File to edit
+context_read_only:                       # Reference files
+  - "README.md"
+evaluator: "default"                    # Use default evaluator
+log_file: "logs/sample_workflow.log"         # Log file name 

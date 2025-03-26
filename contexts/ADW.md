@@ -1,707 +1,217 @@
+# AI Developer Workflow for System Maintenance
 
-# AI Developer Workflow Director Pattern Implementation
+This document outlines how to use AI Developer Workflows (ADW) to maintain and extend your dotfiles system. It provides guidelines for testing, documentation, and change management to ensure system stability.
 
-Below is a complete implementation of the Director pattern that AI can use as a foundation for creating AI Developer Workflows in any codebase.
+## System Maintenance Philosophy
 
-```python:director.py
-import argparse
-import json
-import os
-import subprocess
-import sys
-from pathlib import Path
-from typing import Dict, List, Literal, Optional, Union
+The dotfiles system follows these key principles:
 
-import yaml
-from aider.coders import Coder
-from aider.io import InputOutput
-from aider.models import Model
-from pydantic import BaseModel, Field
+1. **Test-Driven**: Changes should be verified by tests
+2. **Self-Documenting**: System changes are automatically documented
+3. **AI-Assisted**: Leverage AI for routine maintenance and improvements
+4. **Reproducible**: Changes should be reproducible across environments
 
-# Set up environment variables if .env file exists
-if Path(".env").exists():
-    from dotenv import load_dotenv
-    load_dotenv()
+## Using ADW for System Maintenance
 
-class EvaluationResult(BaseModel):
-    """Result of evaluating the execution output."""
-    success: bool
-    feedback: Optional[str] = None
+The Director pattern implemented in `bin/director.py` enables autonomous AI-driven maintenance workflows:
 
-class DirectorConfig(BaseModel):
-    """Configuration for the Director pattern."""
-    prompt: str
-    coder_model: str
-    evaluator_model: str
-    max_iterations: int = Field(default=5)
-    execution_command: str
-    context_editable: List[str]
-    context_read_only: List[str] = Field(default_factory=list)
-    evaluator: Literal["default", "unittest", "pytest", "custom"] = "default"
-    log_file: str = "director_log.txt"
+1. **Configuration Validation**: Verify configuration files are valid
+2. **Package Updates**: Safely update package lists
+3. **Script Improvements**: Enhance existing scripts
+4. **Documentation Generation**: Update READMEs and help text
+5. **Change Tracking**: Document changes in CHANGELOG.md
 
-class Director:
-    """
-    Self-Directed AI Coding Assistant
-    
-    The Director pattern is an agentic workflow that enables AI to autonomously:
-    1. Generate code based on specifications
-    2. Execute the code using a validation command
-    3. Evaluate the results
-    4. Provide feedback for refinement if needed
-    5. Repeat until success or max iterations reached
-    """
+All workflow runs are logged to the `config/adw/logs/` directory for easy review and debugging. This allows you to trace exactly what happened during a workflow execution, which is invaluable for:
 
-    def __init__(self, config_path: str):
-        """Initialize the Director with a configuration file."""
-        self.config = self.load_config(config_path)
-        self.setup_llm_client()
-        self.clear_log_file()
+- Debugging failed workflows
+- Understanding AI reasoning
+- Improving workflow prompts
+- Documenting system changes
 
-    def load_config(self, config_path: str) -> DirectorConfig:
-        """Load and validate the configuration from a YAML file."""
-        config_path = Path(config_path)
-        if not config_path.exists():
-            raise FileNotFoundError(f"Config file not found: {config_path}")
+## Maintenance Workflows
 
-        with open(config_path) as f:
-            config_dict = yaml.safe_load(f)
-
-        # If prompt points to a file, load its contents
-        if config_dict["prompt"].endswith((".md", ".txt")):
-            prompt_path = Path(config_dict["prompt"])
-            if not prompt_path.exists():
-                raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
-            with open(prompt_path) as f:
-                config_dict["prompt"] = f.read()
-
-        # Validate file paths exist
-        for category in ["context_editable", "context_read_only"]:
-            if category in config_dict:
-                for path in config_dict[category]:
-                    if not Path(path).exists():
-                        raise FileNotFoundError(f"File not found: {path}")
-
-        return DirectorConfig(**config_dict)
-
-    def setup_llm_client(self):
-        """Set up the language model client based on the evaluator model."""
-        if "gpt" in self.config.evaluator_model.lower():
-            from openai import OpenAI
-            self.llm_client = OpenAI()
-        elif "claude" in self.config.evaluator_model.lower():
-            from anthropic import Anthropic
-            self.llm_client = Anthropic()
-        else:
-            # Default to OpenAI
-            from openai import OpenAI
-            self.llm_client = OpenAI()
-
-    def clear_log_file(self):
-        """Clear the log file at the start of a new run."""
-        with open(self.config.log_file, "w") as f:
-            f.write(f"Director Pattern Log\n{'='*50}\n\n")
-
-    def log(self, message: str, print_to_console: bool = True):
-        """Log a message to both the console and log file."""
-        if print_to_console:
-            print(message)
-        with open(self.config.log_file, "a") as f:
-            f.write(f"{message}\n")
-
-    def create_prompt(self, iteration: int, evaluation: Optional[EvaluationResult] = None) -> str:
-        """
-        Create a prompt for the AI coding assistant based on iteration number and previous evaluation.
-        
-        Args:
-            iteration: Current iteration number (0-based)
-            evaluation: Result of previous iteration evaluation
-            
-        Returns:
-            A prompt string for the AI coding assistant
-        """
-        if iteration == 0:
-            return self.config.prompt
-        
-        execution_output = self.last_execution_output if hasattr(self, "last_execution_output") else ""
-        
-        return f"""
-# Task Iteration {iteration+1}
-
-## Original Task Specification
-{self.config.prompt}
-
-## Previous Execution Output
-```
-{execution_output}
-```
-
-## Feedback from Previous Attempt
-{evaluation.feedback}
-
-## Instructions
-Please address the feedback above and make the necessary changes to solve the task.
-You have {self.config.max_iterations - iteration} attempts remaining.
-
-Remember to focus on passing the execution command: `{self.config.execution_command}`
-"""
-
-    def execute_ai_code(self, prompt: str) -> bool:
-        """
-        Execute the AI coding assistant with the given prompt.
-        
-        Args:
-            prompt: The prompt for the AI coding assistant
-            
-        Returns:
-            True if successful, False otherwise
-        """
-        self.log(f"🤖 Running AI Coding Assistant (model: {self.config.coder_model})")
-        self.log(f"📝 Prompt:\n{prompt}", print_to_console=False)
-        
-        try:
-            model = Model(self.config.coder_model)
-            coder = Coder.create(
-                main_model=model,
-                io=InputOutput(yes=True),
-                fnames=self.config.context_editable,
-                read_only_fnames=self.config.context_read_only,
-                auto_commits=False,
-                suggest_shell_commands=False,
-            )
-            coder.run(prompt)
-            return True
-        except Exception as e:
-            self.log(f"❌ Error executing AI code: {str(e)}")
-            return False
-
-    def run_execution_command(self) -> str:
-        """
-        Run the execution command and capture its output.
-        
-        Returns:
-            The combined stdout and stderr from the execution
-        """
-        self.log(f"💻 Executing command: {self.config.execution_command}")
-        
-        try:
-            result = subprocess.run(
-                self.config.execution_command,
-                shell=True,
-                capture_output=True,
-                text=True,
-                timeout=300  # 5-minute timeout
-            )
-            output = result.stdout + result.stderr
-            self.last_execution_output = output
-            self.log(f"📋 Execution output:\n{output}", print_to_console=False)
-            return output
-        except subprocess.TimeoutExpired:
-            self.log("⚠️ Execution timed out after 5 minutes")
-            return "ERROR: Execution timed out after 5 minutes"
-        except Exception as e:
-            self.log(f"⚠️ Execution error: {str(e)}")
-            return f"ERROR: {str(e)}"
-
-    def evaluate_result(self, execution_output: str) -> EvaluationResult:
-        """
-        Evaluate the execution output using the specified evaluator.
-        
-        Args:
-            execution_output: The output from the execution command
-            
-        Returns:
-            An EvaluationResult with success status and feedback
-        """
-        if self.config.evaluator == "default":
-            return self._default_evaluator(execution_output)
-        elif self.config.evaluator == "unittest":
-            return self._unittest_evaluator(execution_output)
-        elif self.config.evaluator == "pytest":
-            return self._pytest_evaluator(execution_output)
-        else:
-            self.log(f"⚠️ Unknown evaluator: {self.config.evaluator}, using default")
-            return self._default_evaluator(execution_output)
-
-    def _default_evaluator(self, execution_output: str) -> EvaluationResult:
-        """
-        Default evaluator using an LLM to assess success based on execution output.
-        
-        Args:
-            execution_output: The output from the execution command
-            
-        Returns:
-            An EvaluationResult with success status and feedback
-        """
-        # Build file context
-        editable_files = {}
-        readonly_files = {}
-        
-        for path in self.config.context_editable:
-            try:
-                with open(path, 'r') as f:
-                    editable_files[path] = f.read()
-            except Exception as e:
-                self.log(f"⚠️ Could not read file {path}: {str(e)}", print_to_console=False)
-        
-        for path in self.config.context_read_only:
-            try:
-                with open(path, 'r') as f:
-                    readonly_files[path] = f.read()
-            except Exception as e:
-                self.log(f"⚠️ Could not read file {path}: {str(e)}", print_to_console=False)
-
-        # Create evaluation prompt
-        evaluation_prompt = f"""
-Your task is to evaluate if the code changes have successfully addressed the requirements.
-
-## Task Requirements
-{self.config.prompt}
-
-## Execution Command
-`{self.config.execution_command}`
-
-## Execution Output
-```
-{execution_output}
-```
-
-## Editable Files
-{json.dumps(editable_files, indent=2)}
-
-## Read-Only Reference Files
-{json.dumps(readonly_files, indent=2)}
-
-## Evaluation Instructions
-1. Determine if the execution output indicates success
-2. Check if all requirements in the task have been met
-3. Identify any errors or issues that need to be fixed
-
-Return a JSON object with the following format:
-{{
-  "success": true/false,
-  "feedback": "Detailed feedback explaining what works and what needs improvement"
-}}
-"""
-
-        self.log("🔍 Evaluating results...")
-        
-        # Try with the specified model
-        try:
-            # OpenAI models
-            if "gpt" in self.config.evaluator_model:
-                response = self.llm_client.chat.completions.create(
-                    model=self.config.evaluator_model,
-                    messages=[{"role": "user", "content": evaluation_prompt}],
-                    response_format={"type": "json_object"}
-                )
-                response_text = response.choices[0].message.content
-            # Anthropic models
-            elif "claude" in self.config.evaluator_model:
-                response = self.llm_client.messages.create(
-                    model=self.config.evaluator_model,
-                    max_tokens=1000,
-                    messages=[{"role": "user", "content": evaluation_prompt}]
-                )
-                response_text = response.content[0].text
-            else:
-                raise ValueError(f"Unsupported model: {self.config.evaluator_model}")
-                
-            # Extract JSON from response
-            if "```json" in response_text:
-                json_str = response_text.split("```json")[1].split("```")[0].strip()
-            elif "```" in response_text:
-                json_str = response_text.split("```")[1].split("```")[0].strip()
-            else:
-                json_str = response_text.strip()
-                
-            result = json.loads(json_str)
-            return EvaluationResult(success=result["success"], feedback=result["feedback"])
-            
-        except Exception as e:
-            self.log(f"⚠️ Error in evaluation: {str(e)}")
-            self.log("⚠️ Falling back to simple evaluation")
-            
-            # Simple fallback evaluation
-            if "error" in execution_output.lower() or "fail" in execution_output.lower():
-                return EvaluationResult(
-                    success=False,
-                    feedback=f"Execution failed with errors: {execution_output}"
-                )
-            else:
-                return EvaluationResult(
-                    success=True,
-                    feedback="Execution completed without obvious errors."
-                )
-
-    def _unittest_evaluator(self, execution_output: str) -> EvaluationResult:
-        """Evaluator specifically for unittest output."""
-        if "FAILED" in execution_output or "ERROR" in execution_output:
-            return EvaluationResult(
-                success=False,
-                feedback=f"Tests failed. Please fix the following issues:\n{execution_output}"
-            )
-        elif "OK" in execution_output:
-            return EvaluationResult(success=True, feedback="All tests passed successfully.")
-        else:
-            return EvaluationResult(
-                success=False,
-                feedback=f"Unable to determine test results. Output:\n{execution_output}"
-            )
-
-    def _pytest_evaluator(self, execution_output: str) -> EvaluationResult:
-        """Evaluator specifically for pytest output."""
-        if "failed" in execution_output.lower():
-            return EvaluationResult(
-                success=False,
-                feedback=f"Tests failed. Please fix the following issues:\n{execution_output}"
-            )
-        elif "passed" in execution_output.lower() and "failed" not in execution_output.lower():
-            return EvaluationResult(success=True, feedback="All tests passed successfully.")
-        else:
-            return EvaluationResult(
-                success=False,
-                feedback=f"Unable to determine test results. Output:\n{execution_output}"
-            )
-
-    def direct(self) -> bool:
-        """
-        Run the director pattern to completion.
-        
-        Returns:
-            True if successful, False otherwise
-        """
-        self.log(f"🚀 Starting Director Pattern with max {self.config.max_iterations} iterations")
-        self.log(f"📂 Editable files: {', '.join(self.config.context_editable)}")
-        self.log(f"📚 Read-only files: {', '.join(self.config.context_read_only)}")
-        
-        evaluation = None
-        success = False
-        
-        for iteration in range(self.config.max_iterations):
-            self.log(f"\n{'='*50}")
-            self.log(f"📌 Iteration {iteration+1}/{self.config.max_iterations}")
-            
-            # Create prompt based on iteration and previous evaluation
-            prompt = self.create_prompt(iteration, evaluation)
-            
-            # Run AI coding assistant
-            if not self.execute_ai_code(prompt):
-                self.log("❌ Failed to execute AI coding assistant")
-                break
-                
-            # Run execution command
-            execution_output = self.run_execution_command()
-            
-            # Evaluate results
-            evaluation = self.evaluate_result(execution_output)
-            
-            # Log evaluation results
-            if evaluation.success:
-                self.log(f"✅ Success: {evaluation.feedback}")
-                success = True
-                break
-            else:
-                self.log(f"❌ Failed: {evaluation.feedback}")
-        
-        if success:
-            self.log("\n🎉 Director completed successfully!")
-        else:
-            self.log("\n⚠️ Director completed without success after all iterations")
-            
-        return success
-
-def main():
-    parser = argparse.ArgumentParser(description="AI Developer Workflow Director")
-    parser.add_argument("-c", "--config", required=True, help="Path to configuration YAML file")
-    args = parser.parse_args()
-    
-    director = Director(args.config)
-    success = director.direct()
-    
-    sys.exit(0 if success else 1)
-
-if __name__ == "__main__":
-    main()
-```
-
-# Multi-Shot Examples for Teaching AI to Use the Director Pattern
-
-## Example 1: Creating a New Chart Type
-
-### 1.1 Configuration File (radial_chart.yaml)
-
-```yaml
-prompt: "specs/radial_chart_spec.md"
-coder_model: "claude-3-haiku"
-evaluator_model: "gpt-4o"
-max_iterations: 3
-execution_command: "pytest -xvs tests/test_charts.py"
-context_editable:
-  - "src/aider_has_a_secret/charts.py"
-  - "src/aider_has_a_secret/visualization.py"
-  - "tests/test_charts.py"
-context_read_only:
-  - "specs/new-chart-type.md"
-  - "adw/new_chart.py"
-evaluator: "pytest"
-```
-
-### 1.2 Specification File (radial_chart_spec.md)
-
-```markdown
-# Radial Chart Implementation
-
-## High-Level Objective
-Implement a new radial chart type for visualizing word frequency data, providing a circular representation that highlights key words.
-
-## Implementation Details
-
-1. Update `charts.py` to add a new `RadialChart` class that inherits from the base `Chart` class
-2. Add a new visualization function in `visualization.py` called `create_radial_chart`
-3. Update tests in `test_charts.py` to verify the new chart type works correctly
-
-## Technical Requirements
-
-1. The radial chart should:
-   - Display words in a circular pattern
-   - Use word frequency to determine distance from center (more frequent = further out)
-   - Use different colors for different frequency ranges
-   - Include a legend
-
-2. The implementation should:
-   - Use matplotlib's polar projection
-   - Support customization of colors and title
-   - Handle empty data gracefully
-   - Include proper docstrings and type hints
-
-## Reference
-See `adw/new_chart.py` for an example of how previous chart types were implemented.
-```
-
-### 1.3 Running the Director
+### Running System Tests
 
 ```bash
-python director.py -c radial_chart.yaml
+# Run all system tests
+./tests/run_tests.sh
+
+# Run specific test categories
+./tests/run_tests.sh --category=config
 ```
 
-### 1.4 Expected Workflow
+### Updating the System
 
-1. **Iteration 1:**
-   - AI examines existing chart implementations
-   - Implements RadialChart class and visualization function
-   - Creates initial tests
-   - Some tests may fail due to edge cases
+```bash
+# Use AI to safely update package lists
+ai-workflow update-packages
 
-2. **Iteration 2:**
-   - AI fixes issues identified in the evaluation
-   - Improves error handling
-   - Updates tests
-   - Most tests pass but may have styling issues
+# Use AI to improve script documentation
+ai-workflow improve-docs
 
-3. **Iteration 3:**
-   - AI refines chart styling
-   - Adds final polish
-   - All tests pass
-   - Director completes successfully
-
-## Example 2: Adding a New Output Format Type
-
-### 2.1 Configuration File (json_output_format.yaml)
-
-```yaml
-prompt: "specs/json_output_format_spec.md"
-coder_model: "claude-3-sonnet"
-evaluator_model: "gpt-4o"
-max_iterations: 2
-execution_command: "pytest -xvs tests/test_output_format.py"
-context_editable:
-  - "src/aider_has_a_secret/output_format.py"
-  - "src/aider_has_a_secret/main.py"
-  - "tests/test_output_format.py"
-context_read_only:
-  - "adw/new_output_type.py"
-evaluator: "pytest"
+# Use AI to add a new feature
+ai-workflow add-feature --feature="feature-name"
 ```
 
-### 2.2 Specification File (json_output_format_spec.md)
+## Changelog Management
+
+The system maintains a CHANGELOG.md file to track significant changes:
+
+- **Automatic Updates**: AI workflows automatically update the changelog
+- **Change Categories**: Changes are categorized by type (feature, fix, etc.)
+- **Attribution**: Changes include who or what made them
+- **Timestamps**: All entries include dates
+
+### Changelog Format
 
 ```markdown
-# JSON Output Format Implementation
+# Changelog
 
-## High-Level Objective
-Add a new JSON output format to the transcript analytics system that provides structured data for API integrations.
+All notable changes to the dotfiles system will be documented in this file.
 
-## Implementation Details
+## [Unreleased]
 
-1. Update `output_format.py` to add support for JSON output
-2. Add file extension trigger `.json` to the main processing function
-3. Update tests to verify JSON output format works correctly
+### Added
+- New feature description
 
-## Technical Requirements
+### Changed
+- Change description
 
-1. The JSON output should include:
-   - Transcript metadata (title, date, duration)
-   - Word frequency data (top N words with counts)
-   - Sentence count and average sentence length
-   - Formatted timestamps for key sections
+### Fixed
+- Fix description
 
-2. The implementation should:
-   - Use Python's json module for formatting
-   - Be properly indented for readability
-   - Include a schema version field
-   - Handle special characters correctly
+## [1.0.0] - (give a fun name based off the changes 💅)
 
-## Reference
-See `adw/new_output_type.py` for an example of how previous output formats were implemented.
+### Added
+- Initial release features
 ```
 
-## Example 3: Automated Versioning System
+### Updating the Changelog
 
-### 3.1 Configuration File (versioning_system.yaml)
+AI workflows automatically update the changelog, but you can also update it manually:
 
-```yaml
-prompt: "specs/versioning_system_spec.md"
-coder_model: "claude-3-opus"
-evaluator_model: "gpt-4o"
-max_iterations: 4
-execution_command: "./run_versioning_tests.sh"
-context_editable:
-  - "src/aider_has_a_secret/version.py"
-  - "src/aider_has_a_secret/__init__.py"
-  - "tests/test_version.py"
-  - "run_versioning_tests.sh"
-context_read_only:
-  - "adw/versioning.py"
-  - "adw/versioning.sh"
-evaluator: "default"
+```bash
+# Use AI to generate a changelog entry from recent changes
+ai-workflow update-changelog
+
+# Manually add a changelog entry
+$EDITOR CHANGELOG.md
 ```
 
-### 3.2 Specification File (versioning_system_spec.md)
+## Testing Guidelines
 
-```markdown
-# Automated Versioning System
+### Writing Tests
 
-## High-Level Objective
-Implement an automated versioning system that manages semantic versioning for the project and provides utilities for version comparison and bumping.
+Tests should be added for all significant system components:
 
-## Implementation Details
+- **Configuration Tests**: Verify config files are valid
+- **Script Tests**: Ensure scripts work as expected
+- **Integration Tests**: Verify system components work together
 
-1. Create a `version.py` module with:
-   - Version parsing utilities
-   - Version comparison functionality
-   - Version increment methods (patch, minor, major)
-   
-2. Update `__init__.py` to expose version information
-3. Create comprehensive tests for versioning functionality
-4. Create a shell script to test the versioning system
+### Test Structure
 
-## Technical Requirements
+Each test should:
 
-1. The versioning system should:
-   - Follow semantic versioning (MAJOR.MINOR.PATCH)
-   - Support pre-release versions (alpha, beta, rc)
-   - Support build metadata
-   - Provide comparison operators (>, <, ==, >=, <=)
+1. Have a clear purpose and description
+2. Test one specific aspect of the system
+3. Have clear pass/fail criteria
+4. Be repeatable across environments
 
-2. The implementation should:
-   - Use a class-based approach
-   - Include type hints and docstrings
-   - Have 90%+ test coverage
-   - Handle edge cases gracefully
+### Adding New Tests
 
-## Reference
-See `adw/versioning.py` and `adw/versioning.sh` for examples of how versioning systems work.
+```bash
+# Use AI to generate tests for a component
+ai-workflow create-tests --component="component-name"
+
+# Run tests after changes
+./tests/run_tests.sh
 ```
 
-# Teaching Guide: How to Apply the Director Pattern
+## Extending the System
 
-## Step 1: Understand the Codebase Structure
+### Adding New Components
 
-Before creating an AI Developer Workflow:
+When adding new system components:
 
-1. **Identify key modules**: Locate the main components of the codebase
-2. **Understand dependencies**: Map relationships between modules
-3. **Review existing patterns**: Look for established coding patterns
-4. **Check testing structure**: Note how tests are organized and run
+1. Create appropriate directory structures and READMEs
+2. Write tests for the new component
+3. Update the main README.md to document the addition
+4. Add to the changelog
 
-## Step 2: Create a Specification Document
+### Adding New AI Workflows
 
-Write a detailed spec in Markdown format:
+To add a new AI workflow:
 
-1. **High-level objective**: Clearly state what needs to be accomplished
-2. **Implementation details**: Break down specific components to be created/modified
-3. **Technical requirements**: Provide specific technical constraints and goals
-4. **References**: Link to examples or documentation that provide context
+1. Create a workflow YAML file in `config/adw/`:
+   ```yaml
+   prompt: "Task description"
+   coder_model: "gpt-4o"
+   evaluator_model: "gpt-4o"
+   execution_command: "./tests/test-component.sh"
+   context_editable:
+     - "path/to/editable/file"
+   context_read_only:
+     - "path/to/reference/file"
+   log_file: "logs/workflow-name.log"
+   ```
 
-## Step 3: Configure the Director Pattern
+2. Register the workflow in your profile:
+   ```yaml
+   ai:
+     adw:
+       workflows:
+         - workflow-name
+   ```
 
-Create a YAML configuration file with:
+3. Run the workflow:
+   ```bash
+   ai-workflow workflow-name
+   ```
 
-1. **Prompt**: Path to your specification document
-2. **Models**: Select appropriate AI coding and evaluation models
-3. **Context**: List editable and read-only files
-4. **Execution**: Define how to validate the implementation
-5. **Iterations**: Set an appropriate maximum iteration count
+4. Review the logs:
+   ```bash
+   cat config/adw/logs/workflow-name.log
+   ```
 
-## Step 4: Run the Director
+## System Version Management
 
-Execute the pattern and monitor progress:
+The dotfiles system uses semantic versioning:
 
-1. **Initial run**: `python director.py -c your_config.yaml`
-2. **Monitor logs**: Review the director_log.txt for insights
-3. **Analyze iterations**: See how the AI refines its approach
+- **Major**: Significant changes that may be incompatible
+- **Minor**: New features that are backward compatible
+- **Patch**: Bug fixes and minor improvements
 
-## Step 5: Verify and Refine the Results
+Version updates are managed through tags and documented in the changelog.
 
-After completion:
+## Best Practices
 
-1. **Review changes**: Examine code modifications
-2. **Run additional tests**: Verify beyond the execution command
-3. **Refine if needed**: Make manual adjustments or run again with updated specs
+- Run tests before and after making changes
+- Let AI handle routine maintenance tasks
+- Document significant manual changes
+- Keep changelog entries concise but informative
+- Use separate profiles for experimental changes
+- Periodically audit and clean up the system
 
-# Best Practices for Creating Effective AI Developer Workflows
+## Example: Complete Maintenance Cycle
 
-1. **Start with complete specifications**: Clearly define what success looks like
-2. **Provide relevant context files**: Include examples and related code
-3. **Design tests first**: Create tests that validate your requirements
-4. **Use appropriate models**: Match model capabilities to task complexity
-5. **Set realistic iteration limits**: Complex tasks may need more iterations
-6. **Include reference implementations**: Show similar patterns the AI can learn from
-7. **Be specific about technical constraints**: Explicitly state requirements
-8. **Create small, focused workflows**: Break complex changes into manageable pieces
+```bash
+# 1. Update system and packages
+git pull
+./install.sh --quick
 
-# Troubleshooting the Director Pattern
+# 2. Run tests to verify current state
+./tests/run_tests.sh
 
-## Common Issues and Solutions
+# 3. Use AI to make improvements
+ai-workflow improve-system
 
-1. **AI generates incomplete code**
-   - Solution: Provide more detailed specifications
-   - Solution: Include more context files
-   - Solution: Increase maximum iterations
+# 4. Run tests again to verify changes
+./tests/run_tests.sh
 
-2. **Tests fail consistently**
-   - Solution: Review test requirements for clarity
-   - Solution: Provide example test implementations
-   - Solution: Check if tests have dependencies not in context
+# 5. Review and commit changes
+git add .
+git commit -m "Improve system configuration"
 
-3. **Director reaches max iterations without success**
-   - Solution: Simplify the task into smaller workflows
-   - Solution: Use a more capable model
-   - Solution: Provide more explicit implementation guidance
-
-4. **Execution command times out**
-   - Solution: Simplify the execution command
-   - Solution: Ensure dependencies are installed
-   - Solution: Increase timeout in the director implementation
-
-## Debugging Strategy
-
-1. Review the `director_log.txt` file for insights
-2. Check each iteration's feedback and responses
-3. Run the execution command manually to verify behavior
-4. Try breaking the task into smaller, more focused workflows
-
----
-
-By applying these examples and guidelines, you'll be able to effectively use the Director Pattern to create autonomous AI Developer Workflows for a wide variety of software development tasks. The pattern is highly flexible and can be adapted to different codebases, languages, and development requirements.
+# 6. Update the changelog
+ai-workflow update-changelog
+``` 

@@ -6,6 +6,7 @@ set -e
 DOTFILES_DIR="$HOME/Projects/dotfiles"
 CONFIG_DIR="$DOTFILES_DIR/config"
 LOCAL_CONFIG_DIR="$CONFIG_DIR/local"
+BREW_CONFIG_DIR="$CONFIG_DIR/brew"
 
 # Enhanced backup directory with sequence number to prevent overwrites
 BACKUP_DATE="$(date +%Y%m%d_%H%M%S)"
@@ -272,24 +273,10 @@ install_applications() {
     log "info" "Checking application installations..."
     
     # Quick mode skips Brewfile installation if core tools are already installed
-    if [ "$QUICK_MODE" = true ]; then
-        # Check for essential tools as indicators that apps are installed
-        local missing_tools=0
-        local core_tools=("bat" "eza" "fzf" "ripgrep" "zoxide" "starship" "gh")
-        
-        for tool in "${core_tools[@]}"; do
-            if ! command -v "$tool" &>/dev/null; then
-                log "info" "Core tool '$tool' is missing"
-                missing_tools=$((missing_tools+1))
-            fi
-        done
-        
-        if [ $missing_tools -eq 0 ]; then
-            log "success" "All core tools are already installed. Skipping Brewfile installation."
-            return 0
-        else
-            log "info" "Found $missing_tools missing core tools. Will install applications."
-        fi
+    if $QUICK_MODE && check_core_tools; then
+        log "success" "All core tools are already installed. Skipping Brewfile installation."
+        SKIP_APPS=true
+        return 0
     fi
     
     # Proceed with installation
@@ -311,8 +298,10 @@ install_applications() {
     fi
 
     # Install essential packages
-    log "info" "Installing packages from Brewfile..."
-    brew bundle --file="$DOTFILES_DIR/Brewfile" || log "warn" "Some applications failed to install"
+    if [ "$SKIP_APPS" = false ]; then
+        log "info" "Installing packages from Brewfile..."
+        brew bundle --file="$BREW_CONFIG_DIR/Brewfile" || log "warn" "Some applications failed to install"
+    fi
 }
 
 # Set up shell environment (Oh My Zsh, plugins)
@@ -745,7 +734,7 @@ link_configuration_files() {
         python "$DOTFILES_DIR/bin/generate_config.py" --profile "$PROFILE" --apply || log "warn" "Failed to generate configs from profile"
         
         # Set the current profile
-        echo "$PROFILE" > "$DOTFILES_DIR/.current_profile"
+        echo "$PROFILE" > "$CONFIG_DIR/.current_profile"
         
         # Set WORK_ENV based on profile if not explicitly set
         if [ "$WORK_ENV" = false ] && [ -f "$DOTFILES_DIR/config/profiles/$PROFILE.yaml" ]; then

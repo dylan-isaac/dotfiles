@@ -1,0 +1,8 @@
+coder_model: claude-3-sonnet-20240229
+context_editable: []
+context_read_only: []
+evaluator: default
+evaluator_model: gpt-4o
+execution_command: echo 'Execution command not configured'
+max_iterations: 3
+prompt: prompts/basic_prompt.md

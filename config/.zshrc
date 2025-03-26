@@ -295,8 +295,8 @@ function extract() {
 # Profile management
 DOTFILES_DIR="$HOME/Projects/dotfiles"
 # Load current profile if available
-if [ -f "$DOTFILES_DIR/.current_profile" ]; then
-    export DOTFILES_PROFILE=$(cat "$DOTFILES_DIR/.current_profile")
+if [ -f "$DOTFILES_DIR/config/.current_profile" ]; then
+    export DOTFILES_PROFILE=$(cat "$DOTFILES_DIR/config/.current_profile")
 else
     export DOTFILES_PROFILE="personal"
 fi
@@ -407,6 +407,10 @@ alias context-full='run-repomix xml ""'     # XML without compression (full code
 
 # Common AI tool aliases
 alias coder='aider --model gpt-4o'          # Quick access to preferred AI coding assistant
+
+# AI Developer Workflow aliases
+alias adw="python $DOTFILES_DIR/bin/adw-create.py"
+alias ai-workflow="python $DOTFILES_DIR/bin/adw-create.py"
 
 # -----------------------------
 # 11. Custom Configuration

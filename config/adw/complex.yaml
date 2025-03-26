@@ -1,0 +1,8 @@
+coder_model: claude-3-opus-20240229
+context_editable: []
+context_read_only: []
+evaluator: default
+evaluator_model: gpt-4o
+execution_command: echo 'Execution command not configured'
+max_iterations: 5
+prompt: prompts/complex_prompt.md

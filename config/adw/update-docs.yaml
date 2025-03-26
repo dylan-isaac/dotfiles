@@ -1,0 +1,18 @@
+prompt: |
+  Update documentation and changelog based on recent changes.
+  1. Review the codebase changes since the last update
+  2. Update relevant README files to reflect current functionality
+  3. Add appropriate entries to CHANGELOG.md
+  4. Ensure documentation matches implemented features
+  
+  After completing the updates, run repomix to create a compact representation of the changes.
+coder_model: "gpt-4o"
+evaluator_model: "gpt-4o"
+execution_command: "./tests/run_tests.sh --category=docs"
+context_editable:
+  - "CHANGELOG.md"
+  - "README.md"
+  - "*/README.md"
+context_read_only:
+  - "contexts/ADW.md"
+  - "install.sh" 

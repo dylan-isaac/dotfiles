@@ -1,0 +1,14 @@
+prompt: "Run security checks on the codebase, identify potential issues, and suggest improvements to the security scripts."
+coder_model: "claude-3-opus-20240229"
+evaluator_model: "gpt-4o"
+max_iterations: 3
+execution_command: "./bin/git-security-check.sh && ./tests/security/test_git_security_check.sh"
+context_editable:
+  - "bin/git-security-check.sh"
+  - "tests/security/test_git_security_check.sh"
+context_read_only:
+  - "README.md"
+  - "contexts/ADW.md"
+  - "CHANGELOG.md"
+evaluator: "default"
+log_file: "logs/security_check_workflow.log" 

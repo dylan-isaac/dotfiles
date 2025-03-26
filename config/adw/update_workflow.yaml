@@ -1,0 +1,12 @@
+coder_model: claude-3-sonnet-20240229
+context_editable:
+- CHANGELOG.md
+context_read_only:
+- /Users/dylansheffer/Projects/dotfiles/README.md
+- /Users/dylansheffer/Projects/dotfiles/contexts/ADW.md
+evaluator: default
+evaluator_model: gpt-4o
+execution_command: echo "Testing workflow..."
+log_file: update_workflow.log
+max_iterations: 3
+prompt: Update CHANGELOG.md with recent ADW feature additions

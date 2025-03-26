@@ -1,0 +1,55 @@
+#!/bin/zsh
+
+# AI Workflow - Magic Wand for Contextual AI Automation
+# This script is a simple wrapper around adw-create.py
+
+# Determine the dotfiles directory
+DOTFILES_DIR="$HOME/Projects/dotfiles"
+ADW_CREATOR="$DOTFILES_DIR/bin/adw-create.py"
+
+# Help function
+show_help() {
+    echo "AI Workflow - Magic Wand for Contextual AI Automation"
+    echo ""
+    echo "Usage: ai-workflow [description] [options]"
+    echo ""
+    echo "Options:"
+    echo "  --files, -f       Files to include in the automation context"
+    echo "  --test, -t        Command to test the automation"
+    echo "  --context, -c     Additional context files to include"
+    echo "  --model, -m       AI model to use (overrides profile settings)"
+    echo "  --create-only     Only create the workflow, don't run it"
+    echo "  --list            List available workflows"
+    echo "  --help            Show this help message"
+    echo ""
+    echo "Examples:"
+    echo "  ai-workflow \"Add error handling to this function\""
+    echo "  ai-workflow \"Optimize this SQL query\" --files query.sql"
+    echo "  ai-workflow --list"
+    exit 0
+}
+
+# Check for help flag
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+    show_help
+fi
+
+# Check if the ADW creator exists
+if [ ! -f "$ADW_CREATOR" ]; then
+    echo "Error: ADW creator not found at $ADW_CREATOR"
+    exit 1
+fi
+
+# List workflows if requested
+if [[ "$1" == "--list" || "$1" == "-l" ]]; then
+    python "$ADW_CREATOR" --list
+    exit $?
+fi
+
+# If no arguments, show help
+if [ $# -eq 0 ]; then
+    show_help
+fi
+
+# Forward all arguments to the ADW creator
+python "$ADW_CREATOR" "$@" 

@@ -1,0 +1,12 @@
+prompt: "Create a Goose extension for scraping GitHub stars from a repository and generating a thank-you message template."
+coder_model: "claude-3-sonnet-20240229"
+evaluator_model: "gpt-4o"
+max_iterations: 3
+execution_command: "echo 'Testing Goose browser workflow...'"
+context_editable:
+  - "bin/goose-github-stars.js"
+context_read_only:
+  - "README.md"
+  - "contexts/ADW.md"
+evaluator: "default"
+log_file: "logs/goose_browser_workflow.log" 

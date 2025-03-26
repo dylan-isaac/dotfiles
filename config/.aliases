@@ -1,0 +1,7 @@
+# Generated aliases from profile: personal
+# These aliases are automatically loaded by .zshrc
+
+alias ai-code='aider --model claude-3-sonnet-20240229'
+alias ai-explain='aider --model gpt-4o-mini --no-git'
+alias ai-context='run-repomix xml'
+alias ai-workflow='python ~/Projects/dotfiles/bin/run_adw.py'
