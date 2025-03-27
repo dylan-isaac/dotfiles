@@ -283,6 +283,53 @@ export FIRECRAWL_API_KEY="your_api_key_here"
 goose "Extract product information from https://store.example.com"
 ```
 
+### Repository Context with Repomix
+
+The system includes optimized Repomix integration for generating compact code representations:
+
+```bash
+# Generate repository context in XML format (with compression)
+context
+
+# Generate context in Markdown format
+context-md
+
+# Generate full context (without compression)
+context-full
+
+# Generate context but preserve comments
+context-keep
+
+# Generate context for specific directories
+context-src                    # Only include src directory
+context --include="api/**"     # Only include api directory
+context --exclude="*.test.js"  # Exclude test files
+
+# Minimal context (code-only, no docs/tests)
+context-code                   # Exclude documentation files
+context-min                    # Exclude docs and tests (most compact)
+```
+
+The Repomix configuration is optimized to reduce output size by intelligently:
+
+1. **Filtering file types**: Only includes relevant code files (`.py`, `.js`, `.ts`, etc.)
+2. **Excluding noise**: Removes package locks, build artifacts, and binary files
+3. **Compressing code**: Retains structure while removing implementation details
+4. **Skipping tests**: Optional exclusion of test files that add bulk
+5. **Limiting documentation**: Options to exclude Markdown and doc directories
+
+This approach typically reduces token usage by 40-60% compared to standard code exports.
+
+To customize your Repomix configuration:
+
+```bash
+# Edit the global configuration
+vim ~/Projects/dotfiles/config/ai/repomix.config.json
+
+# Apply changes by reinstalling your dotfiles
+./install.sh
+```
+
 ### Documentation Generation with Repomix
 
 The system includes a tool for generating comprehensive documentation:

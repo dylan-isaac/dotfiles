@@ -481,27 +481,203 @@ alias goose='goose'                    # Block's AI development tool
 function run-repomix() {
     local output_file="repomix-output.txt"
     local style=${1:-"plain"}
-    local compress=${2:-"--compress"}
-    local remove_empty=${3:-"--remove-empty-lines"}
+    local config_file="$HOME/Projects/dotfiles/config/ai/repomix.config.json"
+    local extra_args=()
+    local compress=true
+    local skip_docs=false
+    local ignore_patterns=()
+    local size_limit=40000  # ~40KB is approximately 10k tokens
+    local dry_run=false
     
-    # Run repomix with specified options
-    npx repomix --style "$style" $compress $remove_empty -o "$output_file"
+    # Always exclude license-related content by default
+    ignore_patterns+=("licenses/**" "*license*.md" "*attribution*.md" "*dependencies*.md" "*license*.txt")
+    
+    # Add known large files directly to ignore patterns
+    ignore_patterns+=("axe_rules_data.json")
+    
+    # Check if custom config exists
+    if [ ! -f "$config_file" ]; then
+        # Create default config if it doesn't exist
+        echo "Config file not found. Creating a default one at $config_file"
+        mkdir -p "$(dirname "$config_file")"
+        npx repomix --init > "$config_file"
+    fi
+    
+    # Parse additional arguments
+    shift # Remove the first argument (style)
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            "--no-compress")
+                compress=false
+                ;;
+            "--keep-comments")
+                extra_args+=("--keep-comments")
+                ;;
+            "--include="*)
+                # Extract pattern from --include=pattern format
+                local pattern="${1#*=}"
+                extra_args+=("--include" "$pattern")
+                ;;
+            "--exclude="*)
+                # Convert exclude to ignore pattern collection
+                local pattern="${1#*=}"
+                ignore_patterns+=("$pattern")
+                ;;
+            "-i")
+                if [[ -n "$2" ]]; then
+                    ignore_patterns+=("$2")
+                    shift
+                fi
+                ;;
+            "--ignore="*)
+                local pattern="${1#*=}"
+                ignore_patterns+=("$pattern")
+                ;;
+            "--no-docs")
+                skip_docs=true
+                ;;
+            "--dry-run")
+                dry_run=true
+                ;;
+            *)
+                echo "Unknown option: $1"
+                ;;
+        esac
+        shift
+    done
+    
+    # Add docs exclusion if requested
+    if [ "$skip_docs" = true ]; then
+        ignore_patterns+=("*.md" "docs/**" "examples/**")
+    fi
+    
+    # Add compression flag if needed
+    if [ "$compress" = true ]; then
+        extra_args+=("--compress")
+    fi
+    
+    # Check for large files more comprehensively
+    echo "🔍 Scanning for large files to exclude (>~10k tokens)..."
+    
+    # Create an array to hold large files
+    local large_files=()
+    
+    # Check for large files in the repository using command substitution instead of pipe
+    local found_files=$(find . -type f -maxdepth 3 -size +${size_limit}c -not -path "*/node_modules/*" -not -path "*/\.*" -not -path "*/venv/*" 2>/dev/null)
+    
+    # Process each large file
+    for large_file in $found_files; do
+        # Skip excluded directories/patterns
+        local skip=false
+        for pattern in "${ignore_patterns[@]}"; do
+            if [[ "$large_file" == *"$pattern"* ]]; then
+                skip=true
+                break
+            fi
+        done
+        
+        # Only add if not already in ignore patterns
+        if [ "$skip" = false ]; then
+            # Remove ./ prefix if present
+            large_file="${large_file#./}"
+            large_files+=("$large_file")
+            echo "⚠️ Excluding large file: $large_file ($(du -h "$large_file" 2>/dev/null | cut -f1))"
+            # Add directly to ignore patterns
+            ignore_patterns+=("$large_file")
+        fi
+    done
+    
+    # Also check specifically for json files since they can be very large
+    local json_files=$(find . -type f -name "*.json" -size +${size_limit}c -not -path "*/node_modules/*" -not -path "*/\.*" 2>/dev/null)
+    
+    # Process each large JSON file
+    for large_file in $json_files; do
+        # Remove ./ prefix if present
+        large_file="${large_file#./}"
+        # Check if we've already added this file
+        if [[ ! " ${large_files[@]} " =~ " ${large_file} " ]]; then
+            large_files+=("$large_file")
+            echo "⚠️ Excluding large JSON file: $large_file ($(du -h "$large_file" 2>/dev/null | cut -f1))"
+            # Add directly to ignore patterns
+            ignore_patterns+=("$large_file")
+        fi
+    done
+    
+    # Specifically check for axe_rules_data.json at root level
+    if [ -f "axe_rules_data.json" ]; then
+        file_size=$(stat -f%z "axe_rules_data.json" 2>/dev/null || stat -c%s "axe_rules_data.json" 2>/dev/null)
+        if (( file_size > size_limit )); then
+            echo "⚠️ Excluding large file: axe_rules_data.json ($(du -h "axe_rules_data.json" | cut -f1))"
+            large_files+=("axe_rules_data.json")
+            # Add directly to ignore patterns
+            ignore_patterns+=("axe_rules_data.json")
+        fi
+    fi
+    
+    # If dry run, show what would be excluded and exit
+    if [ "$dry_run" = true ]; then
+        echo "🧪 DRY RUN: Would exclude the following files:"
+        if [ ${#large_files[@]} -gt 0 ]; then
+            for file in "${large_files[@]}"; do
+                echo "$file"
+            done
+            echo "Total: ${#large_files[@]} large files would be excluded"
+        else
+            echo "No large files found"
+        fi
+        return 0
+    fi
+    
+    echo "🔍 Excluding ${#large_files[@]} large files"
+    
+    # Run repomix with specified options and config file
+    echo "🔄 Running Repomix with style=$style..."
+    
+    # Build the command array
+    local cmd=(npx repomix --style "$style" --config "$config_file")
+    
+    # Add extra args
+    for arg in "${extra_args[@]}"; do
+        cmd+=("$arg")
+    done
+    
+    # Add ignore patterns as a comma-separated list if there are any
+    if [ ${#ignore_patterns[@]} -gt 0 ]; then
+        local ignore_str=$(IFS=,; echo "${ignore_patterns[*]}")
+        cmd+=("-i" "$ignore_str")
+    fi
+    
+    # Add output file
+    cmd+=("-o" "$output_file")
+    
+    # Display the command
+    echo "Command: ${cmd[@]}"
+    
+    # Execute the command
+    "${cmd[@]}"
     
     # Check if file was created
     if [ -f "$output_file" ]; then
+        # Get file size
+        local file_size=$(du -h "$output_file" | cut -f1)
+        
+        # Get token count estimate
+        local token_count=$(wc -w < "$output_file" | xargs)
+        local token_estimate=$((token_count / 4 * 3))
+        
         # Copy to clipboard based on OS
         if [[ "$OSTYPE" == "darwin"* ]]; then
             # macOS
             cat "$output_file" | pbcopy
-            echo "✅ Copied to clipboard"
+            echo "✅ Copied to clipboard (size: $file_size, ~$token_estimate tokens)"
         elif command -v xclip &> /dev/null; then
             # Linux with xclip
             cat "$output_file" | xclip -selection clipboard
-            echo "✅ Copied to clipboard"
+            echo "✅ Copied to clipboard (size: $file_size, ~$token_estimate tokens)"
         elif command -v clip &> /dev/null; then
             # Windows
             cat "$output_file" | clip
-            echo "✅ Copied to clipboard"
+            echo "✅ Copied to clipboard (size: $file_size, ~$token_estimate tokens)"
         else
             echo "⚠️ Clipboard copy not supported on this system"
         fi
@@ -514,9 +690,14 @@ function run-repomix() {
 }
 
 # Core repomix aliases with custom functions for reliable clipboard use
-alias context='run-repomix xml'             # XML format with compression
-alias context-md='run-repomix markdown'     # Markdown with compression
-alias context-full='run-repomix xml ""'     # XML without compression (full code)
+alias context='run-repomix xml'                    # XML format with compression
+alias context-md='run-repomix markdown'            # Markdown with compression
+alias context-full='run-repomix xml --no-compress' # XML without compression (no --compress flag)
+alias context-keep='run-repomix xml --keep-comments' # XML with comments preserved
+alias context-src='run-repomix xml --include="src/**"' # Only include src directory
+alias context-code='run-repomix xml --no-docs'     # Code only, no documentation
+# Super minimal context, using --exclude patterns that get converted to -i comma list
+alias context-min='run-repomix xml --no-docs --exclude="tests/**" --exclude="*.test.*" --exclude="examples/**"'
 
 # Common AI tool aliases
 alias coder='aider --model gpt-4o'          # Quick access to preferred AI coding assistant
@@ -563,3 +744,6 @@ _o_complete() {
 }
 
 compdef _o_complete o
+
+# Add a new alias for testing the large file detection
+alias context-check='run-repomix xml --dry-run'
