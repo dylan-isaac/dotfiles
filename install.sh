@@ -567,13 +567,6 @@ setup_ai_tools() {
             log "info" "Installing Task Master AI globally with NPM..."
             npm install -g task-master-ai || log "warn" "Failed to install Task Master AI globally"
         fi
-
-        # Verify Claude Task Master installation
-        if npm list -g @eyaltoledano/claude-task-master &>/dev/null; then
-            log "success" "Claude Task Master is installed globally"
-        else
-            log "warn" "Claude Task Master installation failed. Please install manually with 'npm install -g @eyaltoledano/claude-task-master'"
-        fi
     fi
     
     # Set up Repomix global configuration
