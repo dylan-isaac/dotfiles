@@ -146,8 +146,9 @@ The dotfiles include setup for these AI coding assistants:
 2. **[Goose](https://block.github.io/goose/)** - Block's AI agent for software development
 3. **[Repomix](https://repomix.com/)** - Pack your codebase into a single file for LLMs
 4. **[Firecrawl](https://github.com/mendableai/firecrawl-mcp-server)** - MCP server for web scraping and data extraction
-5. **AI Developer Workflows (ADW)** - Automated coding workflows using the Director pattern
-6. **Context Clip** - Utility for accessing context files from the command line
+5. **[Claude Task Master](https://github.com/eyaltoledano/claude-task-master)** - AI-powered task management system for Cursor
+6. **AI Developer Workflows (ADW)** - Automated coding workflows using the Director pattern
+7. **Context Clip** - Utility for accessing context files from the command line
 
 #### Context Clip
 
@@ -179,6 +180,42 @@ context-clip [TAB]  # Press Tab to see available contexts
 ```
 
 This makes it easy to reuse your context files in various AI-assisted coding workflows. The command features tab completion for context names, making it even faster to access your frequently used contexts.
+
+#### Claude Task Master
+
+Claude Task Master is an AI-powered task management system designed for Cursor. It helps break down projects into manageable tasks and subtasks.
+
+```bash
+# List all tasks in a project
+task-master list
+
+# Show the next task to work on based on dependencies and status
+task-master next
+
+# Show details of a specific task
+task-master show <id>
+
+# Generate tasks from a PRD
+task-master parse-prd --file=scripts/prd.txt
+
+# Expand a task into subtasks
+task-master expand --id=<id>
+
+# Analyze task complexity
+task-master analyze-complexity
+
+# Update task status
+task-master set-status --id=<id> --status=in-progress
+```
+
+When starting a new project, create a PRD in `scripts/prd.txt`, then use `task-master parse-prd` to generate your initial tasks. The system handles dependencies, priorities, and can break complex tasks into manageable subtasks.
+
+Claude Task Master works best when used with Cursor AI. You can ask the AI questions like:
+- "What's the next task I should work on?"
+- "Help me implement task 3"
+- "I've completed task 2, what should I do next?"
+
+For full documentation, see the [Claude Task Master GitHub repository](https://github.com/eyaltoledano/claude-task-master).
 
 #### Goose Profile Configuration
 

@@ -549,20 +549,31 @@ setup_ai_tools() {
     fi
     
     # Install Repomix globally using npm
-    log "info" "Setting up Repomix..."
-    if ! npm list -g repomix &>/dev/null; then
-        log "info" "Installing Repomix globally with NPM..."
-        npm install -g repomix || log "warn" "Failed to install Repomix globally"
-        
-        # Verify installation
-        if npm list -g repomix &>/dev/null; then
-            log "success" "Repomix installed successfully"
-        else
-            log "warn" "Repomix installation may have failed, but can still be used with npx"
-            log "info" "You can still use Repomix with the 'npx repomix' command"
+    if [ "$CONFIG_ONLY" = false ]; then
+        if ! npm list -g repomix &>/dev/null; then
+            log "info" "Installing Repomix globally with NPM..."
+            npm install -g repomix || log "warn" "Failed to install Repomix globally"
         fi
-    else
-        log "success" "Repomix is already installed globally"
+
+        # Verify Repomix installation
+        if npm list -g repomix &>/dev/null; then
+            log "success" "Repomix is installed globally"
+        else
+            log "warn" "Repomix installation failed. Please install manually with 'npm install -g repomix'"
+        fi
+        
+        # Install Claude Task Master globally using npm
+        if ! npm list -g @eyaltoledano/claude-task-master &>/dev/null; then
+            log "info" "Installing Claude Task Master globally with NPM..."
+            npm install -g @eyaltoledano/claude-task-master || log "warn" "Failed to install Claude Task Master globally"
+        fi
+
+        # Verify Claude Task Master installation
+        if npm list -g @eyaltoledano/claude-task-master &>/dev/null; then
+            log "success" "Claude Task Master is installed globally"
+        else
+            log "warn" "Claude Task Master installation failed. Please install manually with 'npm install -g @eyaltoledano/claude-task-master'"
+        fi
     fi
     
     # Set up Repomix global configuration

@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Browser automation capabilities with Goose extensions
 - Security tests for Git security check feature
 - Browser integration tests for Goose extensions
+- Claude Task Master integration for AI-powered task management
 
 ### Changed
 - Enhanced ADW creator to support repomix integration
