@@ -75,9 +75,19 @@ plugins=(
 )
 source $ZSH/oh-my-zsh.sh
 
-# Homebrew
-if type brew &>/dev/null; then
-    FPATH=$(brew --prefix)/share/zsh/site-functions:$FPATH
+# Homebrew & Docker Completions
+if type brew &>/dev/null || [ -d "/Users/dylansheffer/.docker/completions" ]; then
+    # Add Homebrew completion path if brew exists
+    if type brew &>/dev/null; then
+        FPATH=$(brew --prefix)/share/zsh/site-functions:$FPATH
+    fi
+
+    # Add Docker completion path if it exists
+    if [ -d "/Users/dylansheffer/.docker/completions" ]; then
+        fpath=(/Users/dylansheffer/.docker/completions $fpath)
+    fi
+
+    # Initialize completions once
     autoload -Uz compinit
     compinit
 fi
@@ -744,6 +754,3 @@ _o_complete() {
 }
 
 compdef _o_complete o
-
-# Add a new alias for testing the large file detection
-alias context-check='run-repomix xml --dry-run'
