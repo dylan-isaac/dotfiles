@@ -371,7 +371,10 @@ install_npm_globals() {
 
     log "info" "Installing @openai/codex globally..."
     npm install -g @openai/codex || log "warn" "Failed to install @openai/codex"
-    
+
+    log "info" "Installing @anthropic-ai/claude-code globally..."
+    npm install -g @anthropic-ai/claude-code || log "warn" "Failed to install @anthropic-ai/claude-code"
+
     # Add other global npm packages here in the future
     # Example: npm install -g some-other-package || log "warn" "Failed to install some-other-package"
 
@@ -978,6 +981,14 @@ verify_installation() {
         log "success" "Codex CLI is available"
     else
         log "warn" "Codex CLI not found in PATH. Check installation or restart your terminal"
+        issues=$((issues+1))
+    fi
+
+    # Check if Claude Code CLI is available
+    if command -v claude-code &>/dev/null; then
+        log "success" "Claude Code CLI is available"
+    else
+        log "warn" "Claude Code CLI not found in PATH. Check installation or restart your terminal"
         issues=$((issues+1))
     fi
     

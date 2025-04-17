@@ -148,8 +148,9 @@ The dotfiles include setup for these AI coding assistants:
 4. **[Firecrawl](https://github.com/mendableai/firecrawl-mcp-server)** - MCP server for web scraping and data extraction
 5. **[Claude Task Master](https://github.com/eyaltoledano/claude-task-master)** - AI-powered task management system for Cursor
 6. **[Codex CLI](https://github.com/openai/codex)** - Lightweight coding agent that runs in your terminal
-7. **AI Developer Workflows (ADW)** - Automated coding workflows using the Director pattern
-8. **Context Clip** - Utility for accessing context files from the command line
+7. **[Claude Code CLI](https://github.com/anthropics/claude-code-cli)** - Command-line interface for interacting with Claude models for coding tasks
+8. **AI Developer Workflows (ADW)** - Automated coding workflows using the Director pattern
+9. **Context Clip** - Utility for accessing context files from the command line
 
 #### Codex CLI
 
@@ -173,6 +174,17 @@ Codex can:
 - Make targeted file edits with your approval
 
 It requires your OpenAI API key, which is automatically sourced from the environment variables in your local configuration file (`.zshrc.local`).
+
+#### Claude Code CLI
+
+The Claude Code CLI is a command-line tool from Anthropic that allows you to interact with Claude models specifically for coding-related tasks directly from your terminal.
+
+```bash
+# Example usage (replace with actual commands when known)
+claude-code "Refactor this Python function to be more efficient" --file my_script.py
+```
+
+This tool requires your Anthropic API key (`ANTHROPIC_API_KEY`) to be set in your environment, typically within your local configuration file (`.zshrc.local`).
 
 #### Context Clip
 

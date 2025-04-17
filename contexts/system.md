@@ -1,4 +1,3 @@
-
 # Dotfiles System Context
 
 ## Overview
@@ -31,13 +30,14 @@ The dotfiles system is organized as follows:
 
 ### AI Development Tools
 
-| Command        | Description                                      | Documentation                  |
-| -------------- | ------------------------------------------------ | ------------------------------ |
-| `goose`        | Block's AI agent for software development        | https://block.github.io/goose/ |
-| `aider`        | Terminal-based AI pair programming tool          | https://aider.chat/docs/       |
-| `repomix`      | Pack codebase into single file for LLMs          | https://repomix.com/           |
-| `ai-workflow`  | Classic Director pattern for AI workflows        | See `contexts/ADW.md`          |
-| `pai-workflow` | PydanticAI-based implementation for AI workflows | See `contexts/ADW.md`          |
+| Command           | Description                                      | Documentation                  |
+| ----------------- | ------------------------------------------------ | ------------------------------ |
+| `goose`           | Block's AI agent for software development        | https://block.github.io/goose/ |
+| `aider`           | Terminal-based AI pair programming tool          | https://aider.chat/docs/       |
+| `repomix`         | Pack codebase into single file for LLMs          | https://repomix.com/           |
+| `ai-workflow`     | Classic Director pattern for AI workflows        | See `contexts/ADW.md`          |
+| `pai-workflow`    | PydanticAI-based implementation for AI workflows | See `contexts/ADW.md`          |
+| `claude-code-cli` | Anthropic's terminal-based coding agent          | See `contexts/system.md`       |
 
 ### Development Utilities
 
