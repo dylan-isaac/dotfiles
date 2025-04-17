@@ -353,64 +353,29 @@ install_applications() {
     fi
 }
 
-# Set up shell environment (Oh My Zsh, plugins)
-setup_shell() {
-    log "info" "Setting up shell environment..."
-    
-    # Install Oh My Zsh if not installed
-    if [ ! -d "$HOME/.oh-my-zsh" ]; then
-        log "info" "Installing Oh My Zsh..."
-        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended || log "warn" "Failed to install Oh My Zsh"
-    else
-        log "success" "Oh My Zsh is already installed"
+# Install global npm packages
+install_npm_globals() {
+    log "info" "Installing global npm packages..."
+
+    # Skip npm globals in quick mode
+    if [ "$QUICK_MODE" = true ]; then
+        log "info" "Quick mode enabled - skipping global npm package installation"
+        return 0
     fi
 
-    # Install Zsh plugins
-    ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
-    if [ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]; then
-        log "info" "Installing zsh-autosuggestions plugin..."
-        git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions || log "warn" "Failed to install zsh-autosuggestions"
+    if ! command -v npm &> /dev/null; then
+        log "warn" "npm command not found. Skipping global npm package installation."
+        log "warn" "Ensure Node.js and npm are installed (e.g., via nvm or Homebrew)."
+        return 0
     fi
+
+    log "info" "Installing @openai/codex globally..."
+    npm install -g @openai/codex || log "warn" "Failed to install @openai/codex"
     
-    if [ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]; then
-        log "info" "Installing zsh-syntax-highlighting plugin..."
-        git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting || log "warn" "Failed to install zsh-syntax-highlighting"
-    fi
-    
-    # Set up Zsh completions
-    log "info" "Setting up Zsh completions..."
-    
-    # Create completions directory in home if it doesn't exist
-    mkdir -p "$HOME/.zsh_completions" 2>/dev/null || true
-    
-    # Link our completion scripts
-    if [ -d "$CONFIG_DIR/zsh/completions" ]; then
-        for completion_file in "$CONFIG_DIR/zsh/completions/_"*; do
-            if [ -f "$completion_file" ]; then
-                local completion_name=$(basename "$completion_file")
-                link_file "$completion_file" "$HOME/.zsh_completions/$completion_name" "$BACKUP_DIR"
-                log "info" "Linked completion: $completion_name"
-            fi
-        done
-    else
-        log "warn" "Zsh completions directory not found: $CONFIG_DIR/zsh/completions"
-    fi
-    
-    # Add completions directory to fpath in .zshrc.local if not already there
-    local zshrc_local="$LOCAL_CONFIG_DIR/.zshrc.local"
-    if [ -f "$zshrc_local" ]; then
-        if ! grep -q "fpath=(~/.zsh_completions \$fpath)" "$zshrc_local"; then
-            log "info" "Adding completions directory to fpath in .zshrc.local"
-            echo "" >> "$zshrc_local"
-            echo "# Load custom completions" >> "$zshrc_local"
-            echo "fpath=(~/.zsh_completions \$fpath)" >> "$zshrc_local"
-            echo "autoload -Uz compinit && compinit" >> "$zshrc_local"
-        else
-            log "info" "Completions directory already in fpath"
-        fi
-    else
-        log "warn" "Could not add completions to .zshrc.local: file not found"
-    fi
+    # Add other global npm packages here in the future
+    # Example: npm install -g some-other-package || log "warn" "Failed to install some-other-package"
+
+    log "success" "Global npm packages installation step complete."
 }
 
 # Set up AI development tools
@@ -1008,6 +973,14 @@ verify_installation() {
         fi
     done
     
+    # Check if Codex CLI is available
+    if command -v codex &>/dev/null; then
+        log "success" "Codex CLI is available"
+    else
+        log "warn" "Codex CLI not found in PATH. Check installation or restart your terminal"
+        issues=$((issues+1))
+    fi
+    
     # Check if repomix is available globally or via npx
     if npm list -g repomix &>/dev/null; then
         log "success" "Repomix is available globally"
@@ -1027,6 +1000,97 @@ verify_installation() {
     else
         log "warn" "Found $issues issues with the installation"
         log "info" "You may need to restart your terminal or run 'source ~/.zshrc' to complete the setup"
+    fi
+}
+
+# Install packages from Brewfile using the selected profile
+install_brew_bundle() {
+    log "info" "Installing packages from Brewfile for profile: $PROFILE..."
+
+    # Skip brew bundle in quick mode
+    if [ "$QUICK_MODE" = true ]; then
+        log "info" "Quick mode enabled - skipping brew bundle installation"
+        return 0
+    fi
+
+    # Determine the Brewfile path based on profile
+    local brewfile_path="$DOTFILES_DIR/packages/Brewfile.$PROFILE"
+    if [ ! -f "$brewfile_path" ]; then
+        log "warn" "Profile Brewfile '$brewfile_path' not found. Using default Brewfile."
+        brewfile_path="$DOTFILES_DIR/packages/Brewfile"
+    fi
+
+    log "info" "Using Brewfile: $brewfile_path"
+
+    if $SKIP_APPS; then
+        log "info" "Skipping app installations via brew bundle..."
+        brew bundle install --no-upgrade --file="$brewfile_path" --no-lock || log "warn" "Brew bundle command failed (apps skipped)"
+    else
+        log "info" "Running brew bundle install..."
+        brew bundle install --no-upgrade --file="$brewfile_path" --no-lock || log "warn" "Brew bundle command failed"
+    fi
+    
+    log "info" "Cleaning up Homebrew cache..."
+    brew cleanup || log "warn" "Brew cleanup failed"
+}
+
+# Set up shell environment (Oh My Zsh, plugins)
+setup_shell() {
+    log "info" "Setting up shell environment..."
+    
+    # Install Oh My Zsh if not installed
+    if [ ! -d "$HOME/.oh-my-zsh" ]; then
+        log "info" "Installing Oh My Zsh..."
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended || log "warn" "Failed to install Oh My Zsh"
+    else
+        log "success" "Oh My Zsh is already installed"
+    fi
+
+    # Install Zsh plugins
+    ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
+    if [ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]; then
+        log "info" "Installing zsh-autosuggestions plugin..."
+        git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions || log "warn" "Failed to install zsh-autosuggestions"
+    fi
+    
+    if [ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]; then
+        log "info" "Installing zsh-syntax-highlighting plugin..."
+        git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting || log "warn" "Failed to install zsh-syntax-highlighting"
+    fi
+    
+    # Set up Zsh completions
+    log "info" "Setting up Zsh completions..."
+    
+    # Create completions directory in home if it doesn't exist
+    mkdir -p "$HOME/.zsh_completions" 2>/dev/null || true
+    
+    # Link our completion scripts
+    if [ -d "$CONFIG_DIR/zsh/completions" ]; then
+        for completion_file in "$CONFIG_DIR/zsh/completions/_"*; do
+            if [ -f "$completion_file" ]; then
+                local completion_name=$(basename "$completion_file")
+                link_file "$completion_file" "$HOME/.zsh_completions/$completion_name" "$BACKUP_DIR"
+                log "info" "Linked completion: $completion_name"
+            fi
+        done
+    else
+        log "warn" "Zsh completions directory not found: $CONFIG_DIR/zsh/completions"
+    fi
+    
+    # Add completions directory to fpath in .zshrc.local if not already there
+    local zshrc_local="$LOCAL_CONFIG_DIR/.zshrc.local"
+    if [ -f "$zshrc_local" ]; then
+        if ! grep -q "fpath=(~/.zsh_completions \$fpath)" "$zshrc_local"; then
+            log "info" "Adding completions directory to fpath in .zshrc.local"
+            echo "" >> "$zshrc_local"
+            echo "# Load custom completions" >> "$zshrc_local"
+            echo "fpath=(~/.zsh_completions \$fpath)" >> "$zshrc_local"
+            echo "autoload -Uz compinit && compinit" >> "$zshrc_local"
+        else
+            log "info" "Completions directory already in fpath"
+        fi
+    else
+        log "warn" "Could not add completions to .zshrc.local: file not found"
     fi
 }
 
@@ -1065,6 +1129,9 @@ main() {
         
         # Applications (optional based on flags)
         install_applications
+        
+        # Install global npm packages
+        install_npm_globals
         
         # AI development tools (depends on Python/UV)
         setup_ai_tools
@@ -1116,6 +1183,14 @@ main() {
             log "info" "    Run 'source ~/.zshrc' or restart your terminal to access Goose"
         else
             log "warn" "  • Goose: Not installed or not found"
+        fi
+        
+        if command -v codex &>/dev/null; then
+            log "success" "  • Codex CLI: Installed and available"
+            log "info" "    Remember to set your OPENAI_API_KEY in ~/.zshrc.local"
+        else
+            log "warn" "  • Codex CLI: Not found in PATH"
+            log "info" "    Run 'source ~/.zshrc' or restart your terminal to access Codex CLI"
         fi
     fi
     

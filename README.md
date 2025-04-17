@@ -147,8 +147,32 @@ The dotfiles include setup for these AI coding assistants:
 3. **[Repomix](https://repomix.com/)** - Pack your codebase into a single file for LLMs
 4. **[Firecrawl](https://github.com/mendableai/firecrawl-mcp-server)** - MCP server for web scraping and data extraction
 5. **[Claude Task Master](https://github.com/eyaltoledano/claude-task-master)** - AI-powered task management system for Cursor
-6. **AI Developer Workflows (ADW)** - Automated coding workflows using the Director pattern
-7. **Context Clip** - Utility for accessing context files from the command line
+6. **[Codex CLI](https://github.com/openai/codex)** - Lightweight coding agent that runs in your terminal
+7. **AI Developer Workflows (ADW)** - Automated coding workflows using the Director pattern
+8. **Context Clip** - Utility for accessing context files from the command line
+
+#### Codex CLI
+
+Codex CLI is a lightweight coding agent from OpenAI that runs in your terminal:
+
+```bash
+# Run Codex interactively
+codex
+
+# Run with a prompt as input
+codex "explain this codebase to me"
+
+# Run in 'Full Auto' mode
+codex --approval-mode full-auto "create a todo-list app"
+```
+
+Codex can:
+- Scaffold code and run it inside a secure sandbox
+- Install missing dependencies when needed
+- Search repositories and understand codebases
+- Make targeted file edits with your approval
+
+It requires your OpenAI API key, which is automatically sourced from the environment variables in your local configuration file (`.zshrc.local`).
 
 #### Context Clip
 
