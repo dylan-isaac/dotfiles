@@ -1,0 +1,154 @@
+# Starship Configuration
+# Based on Catppuccin Mocha theme
+
+format = """
+[](#fab387)\
+$os\
+$username\
+[](bg:#f9e2af fg:#fab387)\
+$directory\
+[](fg:#f9e2af bg:#a6e3a1)\
+$git_branch\
+$git_status\
+[](fg:#a6e3a1 bg:#74c7ec)\
+$nodejs\
+$rust\
+$golang\
+$php\
+$python\
+[](fg:#74c7ec bg:#cba6f7)\
+$docker_context\
+$kubernetes\
+[](fg:#cba6f7 bg:#f38ba8)\
+$aws\
+[](fg:#f38ba8)\
+$line_break\
+$character"""
+
+# Disable the blank line at the start of the prompt
+add_newline = false
+
+# OS module
+[os]
+style = "bg:#fab387 fg:#11111b"
+disabled = false
+
+[os.symbols]
+Windows = "󰍲"
+Ubuntu = "󰕈"
+SUSE = ""
+Raspbian = "󰐿"
+Mint = "󰣭"
+Macos = "󰀵"
+Manjaro = ""
+Linux = "󰌽"
+Gentoo = "󰣨"
+Fedora = "󰣛"
+Alpine = ""
+Amazon = ""
+Android = ""
+Arch = "󰣇"
+Artix = "󰣇"
+CentOS = ""
+Debian = "󰣚"
+Redhat = "󱄛"
+RedHatEnterprise = "󱄛"
+
+# Username
+[username]
+show_always = true
+style_user = "bg:#fab387 fg:#11111b"
+style_root = "bg:#fab387 fg:#11111b"
+format = '[$user ]($style)'
+disabled = false
+
+# Directory
+[directory]
+style = "bg:#f9e2af fg:#11111b"
+format = "[ $path ]($style)"
+truncation_length = 3
+truncation_symbol = "…/"
+
+[directory.substitutions]
+"Documents" = "󰈙 "
+"Downloads" = " "
+"Music" = " "
+"Pictures" = " "
+"Projects" = "󰉋 "
+
+# Git
+[git_branch]
+symbol = ""
+style = "bg:#a6e3a1 fg:#11111b"
+format = '[ $symbol $branch ]($style)'
+
+[git_status]
+style = "bg:#a6e3a1 fg:#11111b"
+format = '[$all_status$ahead_behind ]($style)'
+conflicted = "🏳"
+up_to_date = ""
+untracked = " "
+ahead = "⇡${count}"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+behind = "⇣${count}"
+stashed = " "
+modified = " "
+staged = '[++\($count\)](green)'
+renamed = "襁 "
+deleted = " "
+
+# Languages
+[nodejs]
+symbol = ""
+style = "bg:#74c7ec fg:#11111b"
+format = '[ $symbol ($version) ]($style)'
+
+[rust]
+symbol = ""
+style = "bg:#74c7ec fg:#11111b"
+format = '[ $symbol ($version) ]($style)'
+
+[golang]
+symbol = ""
+style = "bg:#74c7ec fg:#11111b"
+format = '[ $symbol ($version) ]($style)'
+
+[php]
+symbol = ""
+style = "bg:#74c7ec fg:#11111b"
+format = '[ $symbol ($version) ]($style)'
+
+[python]
+symbol = ""
+style = "bg:#74c7ec fg:#11111b"
+format = '[ $symbol ($version) ]($style)'
+
+# Docker
+[docker_context]
+symbol = ""
+style = "bg:#cba6f7 fg:#11111b"
+format = '[ $symbol $context ]($style)'
+
+# Kubernetes
+[kubernetes]
+symbol = "☸"
+style = "bg:#cba6f7 fg:#11111b"
+format = '[ $symbol $context ]($style)'
+disabled = true
+
+# AWS
+[aws]
+symbol = ""
+style = "bg:#f38ba8 fg:#11111b"
+format = '[ $symbol ($profile) ($region) ]($style)'
+disabled = true
+
+# Character
+[character]
+disabled = false
+success_symbol = '[](bold fg:#a6e3a1)'
+error_symbol = '[](bold fg:#f38ba8)'
+vimcmd_symbol = '[](bold fg:#cba6f7)'
+vimcmd_replace_one_symbol = '[](bold fg:#cba6f7)'
+vimcmd_replace_symbol = '[](bold fg:#cba6f7)'
+vimcmd_visual_symbol = '[](bold fg:#f9e2af)'

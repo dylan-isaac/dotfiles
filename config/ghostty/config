@@ -1,0 +1,50 @@
+# Ghostty Configuration
+# Dylan's setup - Catppuccin themed, ergonomic defaults
+
+# === THEME ===
+theme = one-monokai-darker-spectrum
+
+# === FONT ===
+# Uses built-in JetBrains Mono with Nerd Font symbols
+font-family = "JetBrainsMono Nerd Font"
+font-size = 14
+font-thicken = false
+
+# === WINDOW ===
+window-padding-x = 10
+window-padding-y = 10
+window-padding-balance = true
+window-decoration = auto
+macos-titlebar-style = tabs
+window-inherit-working-directory = true
+window-inherit-font-size = true
+
+# === CURSOR ===
+cursor-style = bar
+cursor-style-blink = true
+
+# === SHELL INTEGRATION ===
+# Enables prompt detection, working directory tracking, and more
+shell-integration = zsh
+shell-integration-features = cursor,sudo,title
+
+# === SCROLLBACK ===
+scrollback-limit = 100000
+
+# === QUICK TERMINAL ===
+# Dropdown terminal - toggle with Ctrl+` (configured below)
+quick-terminal-position = top
+quick-terminal-animation-duration = 0.15
+quick-terminal-autohide = true
+
+# === BEHAVIOR ===
+copy-on-select = clipboard
+confirm-close-surface = false
+mouse-hide-while-typing = true
+
+# === KEYBINDINGS ===
+# Quick Terminal toggle (global when Ghostty is running)
+keybind = global:ctrl+`=toggle_quick_terminal
+
+# Clear screen (already default, but explicit)
+keybind = super+k=clear_screen
