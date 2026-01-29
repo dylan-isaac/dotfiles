@@ -73,11 +73,11 @@ create_symlink "$DOTFILES_DIR/config/starship/starship.toml" "$HOME/.config/star
 # Ghostty configuration
 create_symlink "$DOTFILES_DIR/config/ghostty/config" "$HOME/.config/ghostty/config"
 
-# Git configuration (if it exists)
-if [[ -f "$HOME/.gitconfig" ]]; then
+# Git configuration — capture existing config into dotfiles, then symlink
+if [[ -f "$HOME/.gitconfig" ]] && [[ ! -L "$HOME/.gitconfig" ]]; then
     cp "$HOME/.gitconfig" "$DOTFILES_DIR/config/git/.gitconfig"
-    create_symlink "$DOTFILES_DIR/config/git/.gitconfig" "$HOME/.gitconfig"
 fi
+create_symlink "$DOTFILES_DIR/config/git/.gitconfig" "$HOME/.gitconfig"
 
 # OpenCode configuration
 create_symlink "$DOTFILES_DIR/config/opencode/opencode.json" "$HOME/.config/opencode/opencode.json"
