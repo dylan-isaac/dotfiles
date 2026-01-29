@@ -94,5 +94,4 @@ export PATH="$PATH:/Users/dylanisaac/.lmstudio/bin"
 fpath+=~/.zfunc; autoload -Uz compinit; compinit
 export JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home"
 
-# bookclub shell completion
-eval "$(bookclub completion zsh)"
+# Add to ~/.zshrc.local: eval "$(bookclub completion zsh)"
