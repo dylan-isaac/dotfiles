@@ -83,5 +83,21 @@ fi
 create_symlink "$DOTFILES_DIR/config/opencode/opencode.json" "$HOME/.config/opencode/opencode.json"
 create_symlink "$DOTFILES_DIR/config/opencode/skills" "$HOME/.config/opencode/skills"
 
+# Claude Code configuration
+CLAUDE_CONFIG="$DOTFILES_DIR/config/claude"
+if [[ -d "$CLAUDE_CONFIG" ]]; then
+    print_status "Setting up Claude Code configuration..."
+    mkdir -p "$HOME/.claude"
+
+    # Link top-level config files
+    [[ -f "$CLAUDE_CONFIG/CLAUDE.md" ]] && create_symlink "$CLAUDE_CONFIG/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+    [[ -f "$CLAUDE_CONFIG/settings.json" ]] && create_symlink "$CLAUDE_CONFIG/settings.json" "$HOME/.claude/settings.json"
+
+    # Link config subdirectories
+    for dir in commands hooks output-styles status_lines scripts; do
+        [[ -d "$CLAUDE_CONFIG/$dir" ]] && create_symlink "$CLAUDE_CONFIG/$dir" "$HOME/.claude/$dir"
+    done
+fi
+
 print_status "Dotfiles symlinks created successfully!"
 print_status "Don't forget to restart your terminal or run: source ~/.zshrc"

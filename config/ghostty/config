@@ -1,50 +1,45 @@
-# Ghostty Configuration
-# Dylan's setup - Catppuccin themed, ergonomic defaults
+# Theme
+theme = "Atom One Dark"
 
-# === THEME ===
-theme = one-monokai-darker-spectrum
-
-# === FONT ===
-# Uses built-in JetBrains Mono with Nerd Font symbols
-font-family = "JetBrainsMono Nerd Font"
+# Font
+font-family = "MesloLGM Nerd Font Mono"
 font-size = 14
-font-thicken = false
+# Adds weight to thin fonts for better readability
+font-thicken = true
 
-# === WINDOW ===
-window-padding-x = 10
-window-padding-y = 10
+# Window & Visual
+window-padding-x = 12
+window-padding-y = 12
+# Balances padding when resizing
 window-padding-balance = true
-window-decoration = auto
+# Remember window size/position between sessions
+window-save-state = always
+# Integrates tabs into titlebar like native Mac apps
 macos-titlebar-style = tabs
-window-inherit-working-directory = true
-window-inherit-font-size = true
+# Better color accuracy on Mac displays
+window-colorspace = display-p3
 
-# === CURSOR ===
-cursor-style = bar
-cursor-style-blink = true
+# Cursor
+cursor-style = block
+# Adds vertical spacing between lines
+adjust-cell-height = 20%
 
-# === SHELL INTEGRATION ===
-# Enables prompt detection, working directory tracking, and more
-shell-integration = zsh
-shell-integration-features = cursor,sudo,title
-
-# === SCROLLBACK ===
-scrollback-limit = 100000
-
-# === QUICK TERMINAL ===
-# Dropdown terminal - toggle with Ctrl+` (configured below)
-quick-terminal-position = top
-quick-terminal-animation-duration = 0.15
-quick-terminal-autohide = true
-
-# === BEHAVIOR ===
-copy-on-select = clipboard
-confirm-close-surface = false
+# Performance & Behavior
+# Faster scrolling
+mouse-scroll-multiplier = 2
+# Reduces visual distraction
 mouse-hide-while-typing = true
 
-# === KEYBINDINGS ===
-# Quick Terminal toggle (global when Ghostty is running)
-keybind = global:ctrl+`=toggle_quick_terminal
+# Enables prompt marking, sudo detection, and dynamic titles
+shell-integration-features = cursor,sudo,title
 
-# Clear screen (already default, but explicit)
-keybind = super+k=clear_screen
+# Keybindings
+keybind = shift+enter=text:\x1b\r
+keybind = cmd+t=new_tab
+keybind = cmd+n=new_window
+keybind = cmd+w=close_surface
+# Split terminal vertically
+keybind = cmd+d=new_split:right
+# Split terminal horizontally
+keybind = cmd+shift+d=new_split:down
+keybind = cmd+shift+r=reload_config

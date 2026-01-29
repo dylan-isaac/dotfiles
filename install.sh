@@ -89,6 +89,21 @@ else
     print_warning "zoxide not found"
 fi
 
+# Install npm global packages
+print_header "Installing npm global packages..."
+NPM_GLOBALS=(
+    "@anthropic-ai/claude-code"
+    "ralphy-cli"
+)
+for pkg in "${NPM_GLOBALS[@]}"; do
+    if npm list -g "$pkg" &>/dev/null; then
+        print_status "$pkg already installed"
+    else
+        print_status "Installing $pkg..."
+        npm install -g "$pkg" || print_warning "Failed to install $pkg"
+    fi
+done
+
 # Create symlinks
 print_header "Creating configuration symlinks..."
 if [[ -x "scripts/symlink.sh" ]]; then
