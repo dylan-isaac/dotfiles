@@ -80,10 +80,8 @@ export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 export AWS_PROFILE=uic
 
-# Gobbler MCP - YouTube transcript providers
-export WEBSHARE_USER=muigsfih
-export WEBSHARE_PASS=15tt7rrv6r82
-export TRANSCRIPTAPI_KEY=sk_Nm7gATRFne-amCxcNlZaKnHIxXYCb52Qvp52b3NCm0k
+# Machine-specific secrets (not in git)
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 
 # Added by Antigravity
 export PATH="/Users/dylanisaac/.antigravity/antigravity/bin:$PATH"

@@ -1,0 +1,5 @@
+# Machine-specific secrets (not tracked in git)
+# Copy to ~/.zshrc.local and fill in values
+export WEBSHARE_USER=""
+export WEBSHARE_PASS=""
+export TRANSCRIPTAPI_KEY=""

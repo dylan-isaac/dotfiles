@@ -1,0 +1,3 @@
+.env.local
+*.local
+.DS_Store
